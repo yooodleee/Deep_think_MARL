@@ -14,4 +14,10 @@ Such networks consist of multiple processing units, each with local sensor capab
 limited power supply, and limited communication bandwidth. Despite these limitations, these networks aim to provide
 some global service. Figure 1.1 shows an example of a fielded sensor network used for monitoring environmental quantities
 like humidity, temperature and pressure in an office environment. Each sensor can monitor only its local area and, similarly,
-can communicate only with other sensors in its local vicinity. 
+can communicate only with other sensors in its local vicinity. The question is what algorithm the individual sensors should run so that the center can still piece together a reliable global picture.
+
+Distributed algorithms have been widely studied in computer science. We concentrate on distributed problem-solving algorithms of the sort studied in artificial intelligence. We divide the discussion into two parts. In this chapter we cover distributed constraint satisfaction, where agents attempt in a distributed fashion to find a feasible solution to problem with global constraints. In the next chapter we look at agents who try not to satisfy constraints, but also to optimize some objective function subject to these constraints.
+
+![alt text](image.png)
+
+<Figure 1.1>
