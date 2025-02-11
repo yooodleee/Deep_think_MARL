@@ -3,7 +3,7 @@
 
 A **constraint satisfaction problem(CSP)** is definded by a set of variables, domains for each of the variables, and constraints on the values that the variables might take on simultaneously. The role of constraint satisfaction algorithms is to assign values to the variables in a way that is consistent with all the constraints, or to determine that no such assignment exists.
 
-![alt text](image.png)
+![alt text](../scripts/Figure_1_2.png)
 
 Constraint satisfaction techniques have been applied in diverse domains, including machine vision, natural language processing, theorem proving, and plannng and scheduling, to name but a few. Here is a simple example taken from the domain of sensor networks. Figure 1.2 depicts a three-sensor snippet from the scenario illustrated in Figure 1.1. Each of the sensors has a certain radius that, in combination whith the obstacles in the environment, gives rise to a particular coverage area. These coverage area are shown as ellipses in Figure 1.2. As you can see, some of the coverage areas overlap. We consider a specific problem in this setting. Suppose that each sensor can choose one of three possible radio frequencies. All the frequencies work equally well so long as no two sensors with overlapping converage areas use the same frequency. The question is which algorithms the sensors should employ to select their frequencies, assuming that this decision cannot be made centrally.
 
