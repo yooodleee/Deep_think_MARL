@@ -15,6 +15,8 @@
 #include "OperatorToken.h"
 #include "IdentificationToken.h"
 
+
+
 namespace csp {
     namespace qi = boost::spirit::qi;
     namespace ascii = boost::spirit::ascii;
@@ -49,7 +51,7 @@ namespace csp {
                      +(ident)[_a++] >> eol >>
                      repeat(_a)[+(int_ | string_literal) >> eol] >>
                      +(+(int_ | string_literal | ident | oper) >> eol)
-                    ;
+CspProblemGrammer                    ;
         }
         qi::rule<std::string::const_iterator, std::string()> string_;
         qi::rule<std::string::const_iterator, std::string()> string_literal;
