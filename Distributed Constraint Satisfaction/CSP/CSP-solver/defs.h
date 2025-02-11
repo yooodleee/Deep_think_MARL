@@ -3,7 +3,7 @@
 //
 
 
-#ifdef CSP_DEFS_H
+#ifndef CSP_DEFS_H
 #define CSP_DEFS_H
 
 #include <vector>
