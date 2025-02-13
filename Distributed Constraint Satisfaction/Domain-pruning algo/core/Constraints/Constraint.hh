@@ -60,5 +60,93 @@ public:
 
     inline size_t getUsableScopeSize() { return listSize; }
 
-    
-}
+    /// Getter for the name given by the original instance
+    inline std::string getName() { return name; }
+
+    /// Getter for the unique ID
+    inline int getId() { return id; }
+
+    /// Getter for the constraint stamp
+    inline unsigned long long getStamp() { return stamp; }
+
+    /// Update constraint stamp with the max of its variables
+    inline void updateStamp() {
+        for (auto v : scope)
+            if (stamp < v->ctrStamp)
+                stamp = v->ctrStamp;
+    }
+
+    /// Implement if constraint need initialization
+    virtual bool init() { return false; }
+
+    /// Must be implemented for backtrackable constraints
+    virtual void propagate(int level, Variable* cur, std::vector<Variable*>& touched) = 0;
+
+    /// Must be implemented for backtrackable constraints
+    virtual void backtrack(int level){};
+
+    virtual void getConflict(std::vector<unsigned>& cl);
+
+    virtual void getReason(unsigned lit, Expl& litExpl, int level, std::set<std::pair<unsigned, Expl*>, varOrderCmp>& stack, std::vector<unsigned>& cl);
+};
+
+
+#include "Clauses.hh"
+
+
+
+class RefClauses: public Constraint {
+private:
+    std::set<int> uniqueVar;
+
+public:
+    static Clauses* dbClauses;  // share the same db
+    static double cla_inc;
+    static double clause_decay;
+
+    static inline void claDecayActivity() {
+        RefClauses::cla_inc *= (1 / RefClauses::clause_decay);
+    }
+
+    unsigned ref;
+    int isReason = 0;
+    double activity = .0;
+
+    void claBumpActivity();
+
+    /// Constructor
+    RefClauses(unsigned r)
+        : Constraint("ng" + std::to_string(r))
+        , ref(r){};
+
+    void getConflict(std::vector<unsigned>& cl) override;
+
+    void getReason(unsigned lit, Expl& litExpl, int level, std::set<std::pair<unsigned, Expl*>, varOrderCmp>& stack, std::vector<unsigned>& cl) override;
+
+    /// Implemenentation of the constraint dedicated propagator
+    bool propagate(int level, Variable* cur, std::vector<Variable*>& touched) { assert(false); };
+};
+
+
+class Domain : public Constraint {
+public:
+    /// Constructor
+    Domain()
+        : Constraint("dom")
+    {
+        Stats::nbConstraints--;
+    };
+
+    static Domain* domCtr;
+
+    void getConflict(std::vector<unsigned>& cl) override { assert(false); };
+
+    void getReason(unsigned lit, Expl& litExpl, int level, std::set<std::pair<unsigned, Expl*>, varOrderCmp>& stack, std::vector<unsigned>& cl) override;
+
+    /// Implementation of the constraint dedicated propagator
+    bool propagate(int level, Variable* cur, std::vector<Variable*>& touched) { assert(false); };
+};
+
+
+
+#endif  // CONSTRAINT_H_
