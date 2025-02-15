@@ -78,3 +78,22 @@ bool ConstraintExtNConflict::isValidTuple(vector<ind> tuple)
 }
 
 
+void ConstraintExtNConflict::removeTuple(size_t tuplePos, int level)
+{
+    assert(tuplePos < currentLimit);
+
+    if (saveSize.empty() || saveSize.top().level != level)
+        saveSize.push({ level, currentLimit });
+
+    saveSize.top().sizeDom--;
+    currentLimit--;
+
+    for (size_t j = 0; j < listSize; ++j) {
+        timesSeen[j][tuples[position[tuplePos]][j] - scope[j]->domainStart]--;
+        assert(timesSeen[j][tuples[position[tuplePos]][j] - scope[j]->domainStart] >= 0);
+    }
+
+    std::swap(position[tuplePos], position[currentLimit]);
+}
+
+
