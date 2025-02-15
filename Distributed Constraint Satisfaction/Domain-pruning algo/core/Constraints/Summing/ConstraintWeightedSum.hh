@@ -115,3 +115,45 @@ public:
 };
 
 
+class ConstraintWeightedSumNE : public ConstraintWeightedSum {
+private:
+    int sentinel1;
+    int sentinel2;
+
+    inline long currentSum()
+    {
+        long sum = 0;
+        for (size_t i = 0; i < listSize; i++)
+            sum += coefficients[i] * scope[i]->LocalDomIndToVal(0);
+        return sum;
+    }
+
+    inline long currentSumExcept(int except)
+    {
+        long sum = 0;
+        for (int i = 0; i < (int)listSize; i++)
+            if (i != except)
+                sum += coefficients[i] * scope[i]->LocalDomIndToVal(0);
+        return sum;
+    }
+
+    inline int findAnotherSentinel()
+    {
+        for (int i = 0; i < (int)listSize; i++)
+            if (i != sentinel1 && i != sentinel2 && !scope[i]->isAssigned())
+                return i;
+        return -1;
+    }
+
+public:
+    ConstraintWeightedSumNE(std::string n, std::vector<Variable*> vars, std::vector<int> coefficients, int lim)
+        : ConstraintWeightedSum(n, vars, coefficients, lim)
+        , sentinel1(0)
+        , sentinel2(vars.size() - 1){};
+
+    bool propagate(int level, Variable* cur, std::vector<Variable*>& touched);
+};
+
+
+
+#endif  // CONSTRAINTWEIGHTEDSUM_H_
