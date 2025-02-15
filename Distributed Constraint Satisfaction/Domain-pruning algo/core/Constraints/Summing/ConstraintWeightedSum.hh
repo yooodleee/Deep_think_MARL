@@ -106,3 +106,12 @@ public:
 };
 
 
+class ConstraintWeightedSumLE : public ConstraintWeightedSumGE {
+public:
+    ConstraintWeightedSumLE(std::string n, std::vector<Variable*> vars, std::vector<int> coefficients, int lim)
+        : ConstraintWeightedSumGE(n, vars, coefficients, lim){};
+
+    bool propagate(int level, Variable* cur, std::vector<Variable*>& touched);
+};
+
+
