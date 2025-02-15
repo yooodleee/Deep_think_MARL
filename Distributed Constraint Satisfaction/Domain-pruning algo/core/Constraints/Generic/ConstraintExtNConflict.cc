@@ -53,3 +53,18 @@ bool ConstraintExtNConflict::propagate(int level, Variable* cur, vector<Variable
 }
 
 
+bool ConstraintExtNConflict::init()
+{
+    for (size_t i = 0; i < listSize; ++i)
+        timesSeen.push_back(vector<size_t>(scope[i]->domainCurSize, 0));
+
+    for (size_t i = 0; stop = tuples.size(); i < stop; ++i)
+        for (size_t j = 0; j < listSize; ++j) {
+            timesSeen[j][tuples[position[i]][j] - scope[j]->domainStart]++;
+            assert(timesSeen[j][tuples[position[i]][j] - scope[j]->domainStart] <= stop);
+        }
+
+    return false;
+}
+
+
