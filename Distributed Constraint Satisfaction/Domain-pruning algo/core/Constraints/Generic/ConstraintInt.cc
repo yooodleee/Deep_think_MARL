@@ -51,3 +51,35 @@ bool ConstraintInt::stillOK(map<string, int> tuple)
 }
 
 
+bool ConstraintInt::propagate(int level, Variable* cur, vector<Variable*>& touched)
+{
+    int nValidTuples = 1;
+    for (size_t i = 0; i < listSize && nValidTuples < 10000; ++i)
+        nValidTuples *= scope[i]->domainCurSize;
+
+    if (nValidTuples >= 10000)
+        return false;
+
+    for (size_t i = 0; i < listSize; ++i) {
+        Variable* vTmp = scope[i];
+        int saveSize = vTmp->domainCurSize;
+        int curTuplesByVal = nValidTuples / saveSize;
+        
+        // check for each value if the tuple is still valid, compute a new one if needed
+        for (int j = saveSize - 1; j >= 0; j--) {
+            indVpLocal curVal = vTmp->indDomLocalToIndVPLocal(j);
+            if ((vpRes[i][curVal].empty() || !stillOK(vpRes[i][curVal])) && !computeNewTuple(i, j, curTuplesByVal)) {
+                if (deleteValue(vTmp, j, level))
+                    return true;
+
+                if (saveSize != vTmp->domainCurSize)
+                    nValidTuples -= curTuplesByVal;
+            }
+        }
+
+        if (saveSize != vTmp->domainCurSize)
+            touched.push_back(vTmp);
+    }
+
+    return false;
+}
