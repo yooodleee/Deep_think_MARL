@@ -50,3 +50,22 @@ bool SumScalarBooleanEQ::propagate(int level, Variable* cur, vector<Variable*>& 
 }
 
 
+bool SumScalarBooleanLEVar::propagate(int level, Variable* cur, vector<Variable*>& touched)
+{
+    recomputeBounds();
+
+    int before = limit->domainCurSize;
+    if (limit->removeValueUnder(min, level, this))
+        return true;
+    if (before != limit->domainCurSize)
+        touched.push_back(limit);
+
+    if (max <= limit->getUpperBoundVal())
+        return false;
+
+    // this is the only case where can filter
+    if (min == limit->getUpperBoundVal())
+        filter(level, touched, 1);
+
+    return false;
+}
