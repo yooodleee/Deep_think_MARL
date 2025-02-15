@@ -60,3 +60,59 @@ bool ConstraintWeightedSumEQ::propagate(int level, Variable* cur, vector<Variabl
 }
 
 
+bool ConstraintWeightedSumGE::propagate(int level, Variable* cur, vector<Variable*>& touched)
+{
+    recomputeBounds();
+    if (min >= limit)
+        return false;
+    if (max < limit)
+        return true;
+
+    for (int i = right; i >= leftmostPositiveCoefficientPosition; i--) {
+        Variable* var = scope[i];
+        int sizeBefore = var->domainCurSize;
+        if (sizeBefore == 1)
+            continue;
+        
+        int c = coefficients[i];
+        long maxBase = max - var->getUpperBoundVal() * c;
+        int minimumBefore = var->getLowerBoundVal();
+
+        for (int j = var->domainCurSize - 1; j >= 0; j--)
+            if (maxBase + var->LocalDomIndToVal(j) * c < limit)
+                deleteValue(var, j, level);
+
+        if (sizeBefore != var->domainCurSize)
+            touched.push_back(var);
+
+        assert(var->domainCurSize);
+        if ((min += (var->getLowerBoundVal() - minimumBefore) * c) >= limit)
+            return false;
+    }
+
+    for (int i = left; i < leftmostPositiveCoefficientPosition; i++) {
+        Variable* var = scope[i];
+        int sizeBefore = var->domainCurSize;
+        if (sizeBefore == 1)
+            continue;
+
+        int c = coefficients[i];
+        long maxBase = max - var->getLowerBoundVal() * c;
+        int maxBefore = var->getUpperBoundVal();
+
+        for (int j = var->domainCurSize - 1; j >= 0; j--)
+            if (maxBase + var->LocalDomIndToVal(j) * c < limit)
+                deleteValue(var, j, level);
+
+        if (sizeBefore != var->domainCurSize)
+            touched.push_back(var);
+
+        assert(var->domainCurSize);
+        if ((min += (var->getUpperBoundVal() - maxBefore) * c) >= limit)
+            return false;
+    }
+
+    return false;
+}
+
+
