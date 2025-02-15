@@ -55,3 +55,12 @@ public:
 };
 
 
+class ConstraintSumLE : public ConstraintSum {
+public:
+    ConstraintSumLE(std::string n, std::vector<Variable*> vars, int lim)
+        : ConstraintSum(n, vars, lim){};
+
+    bool propagate(int level, Variable* cur, std::vector<Variable*>& touched);
+};
+
+
