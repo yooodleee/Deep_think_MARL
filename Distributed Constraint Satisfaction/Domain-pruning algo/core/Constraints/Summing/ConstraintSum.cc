@@ -123,3 +123,37 @@ bool ConstraintSumLE::propagate(int level, Variable* cur, vector<Variable*>& tou
 }
 
 
+bool ConstraintSumNE::propagate(int level, Variable* cur, vector<Variable*>& touched)
+{
+    if (sentinel1 == -1 || scope[sentinel1]->isAssigned()) {
+        sentinel1 = findAnotherSentinel();
+        if (sentinel1 == -1) {  // No new non singleton variable
+            if (sentinel2 == -1 || scope[sentinel2]->isAssigned())
+                return currentSum() == limit;
+
+            int before = scope[sentinel2]->domainCurSize;
+            if (scope[sentinel2]->removeValue((limit - currentSumExcept(sentinel2)), level, this))
+                return true;
+
+            if (before != scope[sentinel2]->domainCurSize)
+                touched.push_back(scope[sentinel2]);
+            return false;
+        }
+    }
+
+    if (sentinel2 == -1 || scope[sentinel2]->isAssigned()) {
+        sentinel2 = findAnotherSentinel();
+
+        if (sentinel2 == -1) {
+            int before = scope[sentinel1]->domainCurSize;
+            if (scope[sentinel1]->removeValue((limit - currentSumExcept(sentinel1)), level, this))
+                return true;
+
+            if (before != scope[sentinel1]->domainCurSize)
+                touched.push_back(scope[sentinel1]);
+            return false;
+        }
+    }
+
+    return false;
+}
