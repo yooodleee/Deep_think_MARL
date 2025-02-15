@@ -20,3 +20,36 @@ ConstraintExtNConflict::ConstraintExtNConflict(string n, vector<Variable*> vars,
 }
 
 
+bool ConstraintExtNConflict::propagate(int level, Variable* cur, vector<Variable*>* touched)
+{
+    for (size_t i = 0; i < currentLimit;) {
+        if (isValidTuple(tuples[position[i]]))
+            ++i;
+        else
+            removeTuple(i, level);
+    }
+
+    int nValidTuples = 1;
+    for (size_t i = 0; i < listSize && nValidTuples < 10000; ++i)
+        nValidTuples *= scope[i]->domainCurSize;
+
+    if (nValidTuples >= 10000)
+        return false;
+
+    for (size_t i = 0; i < listSize; ++i) {
+        int saveSize = scope[i]->domainCurSize;
+        size_t nbValidTuplesOfValues = nValidTuples / saveSize;
+        for (int j = saveSize - 1; j >= 0; j--) {
+            assert(nbValidTuplesOfValues >= timesSeen[i][scope[i]->indDomLocalToIndVPLocal(j)]);
+            if (nbValidTuplesOfValues == timesSeen[i][scope[i]->indDomLocalToIndVPLocal(j)] && deleteValue(scope[i], j, level))
+                return true;
+        }
+
+        if (saveSize != scope[i]->domainCurSize)
+            touched->push_back(scope[i]);
+    }
+
+    return false;
+}
+
+
