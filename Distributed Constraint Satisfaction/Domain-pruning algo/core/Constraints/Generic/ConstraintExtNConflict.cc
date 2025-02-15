@@ -68,3 +68,13 @@ bool ConstraintExtNConflict::init()
 }
 
 
+bool ConstraintExtNConflict::isValidTuple(vector<ind> tuple)
+{
+    for (size_t i = 0; i < listSize; i++)
+        if (!scope[i]->isValidVpInd(tuple[i]))
+            return false;
+
+    return true;
+}
+
+
