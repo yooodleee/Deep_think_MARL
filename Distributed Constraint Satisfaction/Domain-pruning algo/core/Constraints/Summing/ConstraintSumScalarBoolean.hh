@@ -54,3 +54,36 @@ public:
 };
 
 
+class SumScalarBooleanLE : public ConstraintSumScalarBoolean {
+private:
+    int limit;
+
+    inline void recomputeBounds()
+    {
+        min = max = 0;
+        limitSet = -1;
+
+        for (int i = 0; i < half; i++) {
+            Variable* v1 = scope[i];
+            Variable* v2 = scope[i + half];
+
+            if (v1->getUpperBoundVal() && v2->getUpperBoundVal()) { // if one 1 is missing to do because the product is necessarly 0
+                max++;
+                if (v1->getLowerBoundVal() && v2->getLowerBoundVal())   // if v1 and v2 assigned to 1
+                    min++;
+                else if (v1->isAssigned() || v2->isAssigned())
+                    set01vs1[++limitSet] = i;   // add i if (0, 1) versus 1 (or equivalently 1 versus (0, 1)) ; the only way ro filter here
+            }
+        }
+    }
+
+
+public:
+    SumScalarBooleanLE(std::string n, std::vector<Variable*> vars, int lim)
+        : ConstraintSumScalarBoolean(n, vars)
+        , limit(lim){};
+
+    bool propagate(int level, Variable* cur, std::vector<Variable*>& touched);
+};
+
+
