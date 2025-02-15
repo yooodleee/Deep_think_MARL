@@ -45,3 +45,12 @@ public:
 };
 
 
+class ConstraintWeighedSumEQ : public ConstraintWeightedSum {
+public:
+    ConstraintWeighedSumEQ(std::string n, std::vector<Variable*> vars, std::vector<int> coefficients, int lim)
+        : ConstraintWeightedSum(n, vars, coefficients, lim){};
+
+    bool propagate(int level, Variable* cur, std::vector<Variable*>& touched);
+};
+
+
