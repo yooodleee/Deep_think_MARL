@@ -49,3 +49,40 @@ bool ConstraintSumEQ::propagate(int level, Variable* cur, vector<Variable*>& tou
 }
 
 
+bool ConstraintSumGE::propagate(int level, Variable* cur, vector<Variable*>& touched)
+{
+    recomputeBounds();
+
+    if (min >= limit)
+        return false;
+    if (max < limit)
+        return true;
+
+    for (size_t i = 0; i < listSize; i++) {
+        Variable* var = scope[i];
+
+        int sizeBefore = var->domainCurSize;
+        if (sizeBefore == 1)
+            continue;
+        
+        min -= var->getLowerBoundVal();
+
+        int curLim = limit - (max - var->getUpperBoundVal());
+        for (int j = var->domainCurSize - 1; j >= 0; j--)
+            if (var->LocalDomIndToVal(j) < curLim)
+                deleteValue(var, j, level);
+
+        if (sizeBefore != var->domainCurSize)
+            touched.push_back(var);
+
+        assert(var->domainCurSize);
+        
+        min += var->getLowerBoundVal();
+        if (min >= limit)
+            return false;
+    }
+
+    return false;
+}
+
+
