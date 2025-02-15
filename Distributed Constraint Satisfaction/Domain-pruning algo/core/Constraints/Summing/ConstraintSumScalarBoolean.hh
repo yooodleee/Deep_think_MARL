@@ -87,3 +87,48 @@ public:
 };
 
 
+class SumScalarBooleanEQ : public ConstraintSumScalarBoolean {
+private:
+    int limit;
+
+    int* set01vs01;
+    int limitSetEq;
+
+    inline void recomputeBounds()
+    {
+        min = max = 0;
+        limitSet = limitSetEq = -1;
+
+        for (int i = 0; i < half; i++) {
+            Variable* v1 = scope[i];
+            Variable* v2 = scope[i + half];
+
+            if (v1->getUpperBoundVal() && v2->getUpperBoundVal()) { // if one 1 is missing nothing to do because the product is necessarly 0
+                max++;
+                if (v1->getLowerBoundVal() && v2->getLowerBoundVal())
+                    min++;
+                else if (v1->isAssigned() || v2->isAssigned())
+                    set01vs1[++limitSet] = i;   // add i iff have (0, 1) versus 1 (or equivalently 1 versus (0, 1)); the only way to filter here
+
+                else
+                    set01vs01[++limitSetEq] = i;    //add i because have (0, 1) versus (0, 1)
+            }
+        }
+    }
+
+
+public:
+    SumScalarBooleanEQ(std::string n, std::vector<Variable*> vars, int lim)
+        : ConstraintSumScalarBoolean(n, vars)
+        , limit(lim)
+    {
+        set01vs01 = new int[half];
+        for (int i = 0; i < half; ++i)
+            set01vs01[i] = i;
+        limitSetEq = -1;
+    };
+
+    bool propagate(int level, Variable* cur, std::vector<Variable*>& touched);
+};
+
+
