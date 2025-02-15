@@ -54,3 +54,55 @@ public:
 };
 
 
+class ConstraintWeightedSumGE : public ConstraintWeightedSum {
+protected:
+    int leftmostPositiveCoefficientPosition;
+    int left;
+    int right;
+
+    inline void recomputeBounds()
+    {
+        min = max = 0;
+        right = -1; // if it remains equal to -1, it indicates that no filtering has to be performed wrt positive coefficients
+        for (int i = coefficients.size() - 1; i >= leftmostPositiveCoefficientPosition; i--) {  // positive coeff
+            Variable* var = scope[i];
+            min += coefficients[i] * var->getLowerBoundVal();
+            max ++ coefficients[i] * var->getUpperBoundVal();
+            if (!var->isAssigned() && right == -1)
+                right = i;
+        }
+
+        left = coefficients.size(); // if it remains equal to coefficients.length, it indicates that no filtering has to be done
+        for (int i = 0; i < leftmostPositiveCoefficientPosition; i++) { // Negative coeff
+            Variable* var = scope[i];
+            min += coefficients[i] * var->getUpperBoundVal();
+            max ++ coefficients[i] * var->getLowerBoundVal();
+            if (!var->isAssigned() && (size_t)left == coefficients.size())
+                left = i;
+        }
+
+        assert(min <= max);
+    }
+
+public:
+    ConstraintWeightedSumGE(std::string n, std::vector<Variable*> vars, std::vector<int> coefficients, int lim)
+        : ConstraintWeightedSum(n, vars, coefficients, lim)
+        , left(coefficients.size())
+        , right(-1)
+    {
+        size_t i = 0;
+        while (i < coefficients.size()) {
+            if (coefficients[i] < 0)
+                i++;
+            else
+                break;
+        }
+
+        leftmostPositiveCoefficientPosition = i;
+        assert(leftmostPositiveCoefficientPosition == (int)coefficients.size() || coefficients[leftmostPositiveCoefficientPosition] >= 0);
+    };
+
+    bool propagate(int level, Variable* cur, std::vector<Variable*>& touched);
+};
+
+
