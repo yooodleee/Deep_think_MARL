@@ -21,3 +21,32 @@ bool SumScalarBooleanLE::propagate(int level, Variable* cur, vector<Variable*>& 
 }
 
 
+bool SumScalarBooleanEQ::propagate(int level, Variable* cur, vector<Variable*>& touched)
+{
+    recomputeBounds();
+
+    if (min > limit || max < limit)
+        return true;
+    if (min == max || (min < limit && limit < max))
+        return false;   // because entailed in that case
+
+    if (min == limit)
+        filter(level, touched, 1);
+    else if (max == limit) {
+        tilter(level, touched, 0);
+        for (int i = limitSetEq; i >= 0; i--) {
+            int j = set01vs01[i];
+            assert(scope[j]->domainCurSize == 2 && scope[half + j]->domainCurSize == 2);
+
+            scope[j]->removeValue(0, level, this);
+            touched.push_back(scope[j]);
+
+            scope[half + j]->removeValue(0, level, this);
+            touched.push_back(scope[half + j]);
+        }
+    }
+
+    return false;
+}
+
+
