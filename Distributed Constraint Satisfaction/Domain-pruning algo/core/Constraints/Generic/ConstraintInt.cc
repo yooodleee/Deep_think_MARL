@@ -41,3 +41,13 @@ bool ConstraintInt::computeNewTuple(int var, int value, int nValidTuplesMax)
 }
 
 
+bool ConstraintInt::stillOK(map<string, int> tuple)
+{
+    for (size_t k = 0; k < listSize; ++k)
+        if (!scope[k]->isValidValue(tuple[scope[k]->getName()]))
+            return false;
+
+    return true;
+}
+
+
