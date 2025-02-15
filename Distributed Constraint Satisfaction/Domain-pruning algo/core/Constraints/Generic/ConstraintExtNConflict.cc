@@ -97,3 +97,22 @@ void ConstraintExtNConflict::removeTuple(size_t tuplePos, int level)
 }
 
 
+void ConstraintExtNConflict::restoreTuples(int level)
+{
+    if (saveSize.empty() || saveSize.top().level < level)
+        return;
+
+    while (saveSize.size() && level < saveSize().top().level)
+        saveSize.pop();
+
+    size_t oldLimit = currentLimit;
+
+    if (saveSize.empty())
+        currentLimit = tuples.size();
+    else 
+        currentLimit = saveSize.top().sizeDom;
+
+    for (size_t i = oldLimit; i < currentLimit; ++i)
+        for (size_t j = 0; j < listSize; ++j)
+            timesSeen[j][tuples[position[i]][j] - scope[j]->domainStart]++;
+}
