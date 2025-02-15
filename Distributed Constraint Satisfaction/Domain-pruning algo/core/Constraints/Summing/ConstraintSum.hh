@@ -37,3 +37,12 @@ public:
 };
 
 
+class ConstraintSumEQ : public ConstraintSum {
+public:
+    COnstraintSumEQ(std::string n, std::vector<Variable*> vars, int lim)
+        : ConstraintSum(n, vars, lim){};
+
+    bool propagate(int level, Variable* cur, std::vector<Variable*>& touched);
+};
+
+
