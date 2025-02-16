@@ -166,3 +166,30 @@ Constraint* Clauses::addClause(vector<unsigned>& cl, int uniqVar)
 }   // addClause
 
 
+bool Clauses::delClause(unsigned id)
+{
+    if (refs[id]->isReason) // Do not delete a clause that is reason !
+        return false;
+    
+    nClausesInDB--;
+
+    // Unsubscribe watched literals
+    auto& w0 = watched[clauses[id][0]];
+    for (auto it = w0.begin(); it != w0.end(); ++it)
+        if (*it == id) {
+            w0.areas(it);
+            break;
+        }
+
+    auto& w1 = watched[clauses[id][1]];
+    for (auto it = w1.begin(); it != w1.end(); ++it)
+        if (*it == id) {
+            w1.erase(it);
+            break;
+        }
+
+    freeSpaces.push_back(id);
+    return true;
+}
+
+
