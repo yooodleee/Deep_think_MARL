@@ -193,3 +193,28 @@ bool Clauses::delClause(unsigned id)
 }
 
 
+void Clauses::reduceDB()
+{
+    assert(Options::reduceDBOpt);
+    assert(freeSpaces.empty());
+
+    // create the vec v of integer and put a seq of integer begining at 0 to represent clause IDs
+    std::vector<int> v(clauses.size());
+    std::iota(v.begin(), v.end(), 0);
+
+    // Sort it by increasing num of unique variables, break ties by bigger activity 
+    std::sort(v.begin(), v.end(), [this](int x, int y) {
+        if (uniqVars[x] != uniqVars[y])
+            return uniqVars[x] < uniqVars[y];
+        else
+            return refs[x]->activity  > refs[y]->activity;
+    });
+
+    double extra_lim = RefClause::cla_inc / nClausesInDB;
+    // Remove the last half of clauses (if they aren't reason -> handled delClause)
+    for (size_t i = v.size() >> 1, stop = v.size(); i < stop; ++i)
+        if (clState[v[i]] != 3 && !refs[v[i]]->isReson && refs[v[i]]->activity < extra_lim)
+            delClause(v[i]);
+
+    clauseDbSize += 500;    // grow the clauses DB
+}
