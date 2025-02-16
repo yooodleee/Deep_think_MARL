@@ -113,3 +113,56 @@ int Clauses::propagate(int level, Variable* cur, std::vector<Variable*>& touched
 }   // propagate
 
 
+/*
+    Add the clause in the constraint and watch the two first litterals.
+
+    @param[in] cl, a set of 'literals'
+*/
+Constraint* Clauses::addClause(vector<unsigned>& cl, int uniqVar)
+{
+    assert(cl.size() > 1);
+
+    // If the DB is full, call reduce.
+    if (Options::reduceDBOpt && nClausesInDB >= clauseDbSize)
+        reduceDB();
+    
+    Stats::nbNoGoods++;
+    nClausesInDB++;
+    if (freeSpaces.empty()) {   // In case of no free spaces, add the new clause at the end and init struct
+        watched[cl[0]].push_back(clauses.size());
+        watched[cl[1]].push_back(clauses.size());
+        refs.push_back(new RefClause(clauses.size()));
+        clauses.push_back(cl);
+        uniqVar.push_back(uniqVar);
+
+        if (uniqVar == 2 && Options::keepBinary) {
+            Stats::binary++;
+            clState.push_back(3);
+        } else 
+            clState.push_back(2);
+
+        refs.back()->claBumpActivity();
+        return refs.back();
+    } else {    // otherwise reinit the structs already existing
+        assert(Options::reduceDBOpt);
+        int id = freeSpaces.back();
+        freopen.pop_back();
+
+        watched[cl[0]].push_back(id);
+        watched[cl[1]].push_back(id);
+        clauses[id] = cl;
+        uniqVars[id] = uniqVar;
+
+        if (uniqVar == 2 && Options::keepBinary) {
+            Stats::binary++;
+            clState[id] = 3;
+        } else
+            clState[id] = 2;
+
+        refs[id]->activity = .0;
+        refs[id]->claBumpActivity();
+        return refs[id];
+    }
+}   // addClause
+
+
