@@ -82,3 +82,34 @@ int Clauses::checkWatch(unsigned lit, int level, vector<Variable*>& touched)
     return -1;
 }
 
+/*
+    Progation process.
+
+    @param[in] level,
+    @param[in] cur,
+    @param[in] touched,
+*/
+int Clauses::propagate(int level, Variable* cur, std::vector<Variable*>& touched)
+{
+    int ret;
+
+    if (cur->isAssigned()) {
+        // If the variable is assigned need to find new watch for the clauses where not(Lit) appears
+        ret = checkWatch(cur->indDomLocalToIndVP(0) << 1 | 1, level, touched);
+        if (ret != -1)
+            return ret;
+    }
+
+    int saveDomainCurSize = cur->domainCurSize;
+    for (int vi = cur->domainCurSize, stop = cur->getPuSizeLast(); vi < stop; vi++) {
+        // For all of the vals removed since the last call need to find new watch for the clauses where Lit appears
+        ret = checkWatch(cur->indDomLocalToIndVP(vi) << 1, level, touched);
+        if (ret != -1)
+            return ret;
+    }
+
+    cur->setPuSizeLast(saveDomainCurSize, level);
+    return -1;
+}   // propagate
+
+
