@@ -68,3 +68,18 @@ int ClausePositive::propagate(int level, Variable* cur, std::vector<Variable*>& 
 }   // propagate
 
 
+/**
+ *  Add the clause in the constraint and watch the two first literals. 
+ * 
+ * @param[in] cl, a set of 'literals'
+ */
+
+void ClausesPositive::addCluase(vector<indVp>& cl)
+{
+    assert(cl.size() > 1);
+    watched[cl[0]].push_back(clauses.size());
+    watched[cl[1]].push_back(clauses.size());
+
+    clauses.push_back(cl);
+    Stats::nbNoGoods++;
+}   // addCluase
