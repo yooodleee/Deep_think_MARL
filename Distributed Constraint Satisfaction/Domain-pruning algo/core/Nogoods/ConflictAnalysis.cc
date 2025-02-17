@@ -52,3 +52,85 @@ void ConflictAnalysis::buildStack(vector<unsigned>& conflictCl, int level)
 }
 
 
+vector<unsigned> ConflictAnalysis::analyse(Constraint* cur, int level, int& bjLevel, int& uniqVar)
+{
+    conflictCl.clear();
+    cl.clear();
+    stack.clear();
+    bjLevel = 0;
+    cl.push_back(0);    // assertive literal position
+    ConflictAnalysis::gblCaStamp++;
+
+    if (Options::Verbose >= verbose::high)
+        printHeaderAnalyse(ctr);
+
+    // gather the conflict clause
+    ctr->getConflict(conflictCl);
+
+    // build the stack from conflictCl
+    buildStack(conflictCl, level);
+
+    if (stack.empty() && !level)
+        return vector<unsigned>();  // UNS because the conflict come from level 0 decisions
+    
+    assert(!stack.empty());
+    Variable* curVarDec = nullptr;
+    // handle every  current level lit until only one remains. The last one is useful to determine the assertive lit
+    while (stack.size() > 1) {
+        std::pair<unsigned, Expl*> litExpl = pop();
+
+        unsigned lit = get<0>(litExpl);
+        Expl& cur = *get<1>(litExpl);
+        Variable* var = Variable::varProps[lit >> 1].toVar;
+
+        if (Options::Verbose >= verbose::high)
+            cerr << "s-" << ((lit & 1) ? "¬" : "") << (lit >> 1) << " ";
+
+        if (cur.str != nullptr)
+            cur.ctr->getReason(lit, cur, level, stack, cl);
+        else {
+            if (Options::Verbose >= verbose::high)
+                cerr << "dn ";
+            curVarDec = var;
+            break;
+        }
+    }
+
+    // Handle assertive literal by checking if the last literal var was already found
+    std::pair<unsigned, Expl*> litExpl = *(stack.rbegin());
+    unsigned lit = get<0>(litExpl);
+    Variable* var = Variable::varProps[lit >> 1].toVar;
+    if (curVarDec != nullptr) {
+        assert(curVarDec == var);
+        if (Options::Verbose >= verbose::high)
+            cerr << "s-" << ((lit & 1) "¬" : "") << (lit >> 1) << " ";
+        lit = (static_cast<unsigned>(var->indDomLocalToIndVP(0)) << 1) | 1;
+    }
+    cl[0] = lit;    // insert the assertive literal at the begining of the clause
+
+    if (Options::Verbose >= verbose::high)
+        cerr << ((lit & 1) ? "¬" : "") << (lit >> 1) << endl;
+
+    for (auto c : cl)
+        Variable::varProps[c >> 1].marked = false;
+
+    set<int> uniqueVar;
+    size_t save = 0;
+    // Compute the backjump level and swap the literal to the second position of the clause
+    // And compute the num of uniqVars in the clause for heuristics
+    uniqueVar.insert(Variable::varProps[cl[0] >> 1].toVar->getId());
+    for (size_t i = 1, stop = cl.size(); i < stop; i++) {
+        uniqueVar.insert(Variable::varProps[cl[i] >> 1].toVar->getId());
+        int curBjLvl = Variable::vpExpl[cl[i] >> 1].level;
+        if (curBjLvl > bjLevel) {
+            bjLevel = curBjLvl;
+            save = i;
+        }
+    }
+
+    if (save)
+        swap(cl[1], cl[save]);
+    uniqVar = uniqueVar.size();
+
+    return cl;
+}
