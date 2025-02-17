@@ -79,3 +79,35 @@ bool IncNGNoGoodsManager::updateBeta(IncNG* ng, vector<Variable*>& touched)
     return false;
 }
 
+/**
+ * Nogoods global constraint filter. 
+ * 
+ * @param[in] ng a nogood. 
+ * 
+ * @return true if conflict. 
+ */
+bool IncNGNoGoodsManager::filter(IncNG* ng, vector<Variable*>& touched)
+{
+    if (ng->deleted || ng->stamp == stamp)
+        return false;
+    
+    ng->stamp = stamp;
+
+    if (ng->level() < cspAC->getDecisionLevel())
+        ng->incNgList.push_back({ ng->m(), ng->alpha(), ng->beta(), cspAC->getDecisionLevel() });
+    
+    if (updateAlpha(ng, touched))
+        return true;
+
+    if (ng->m() && ng->beta() != ng->m() && updateBeta(ng, touched))
+        return true;
+
+    if (!ng->m()) {
+        ng->deleted = true;
+        ng->dlevel = cspAC->getDecisionLevel();
+    }
+
+    return false;
+}
+
+
