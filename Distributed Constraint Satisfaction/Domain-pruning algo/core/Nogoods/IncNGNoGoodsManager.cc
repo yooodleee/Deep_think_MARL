@@ -167,3 +167,47 @@ void IncNGNoGoodsManager::restart(vector<vector<indVp>> negValues, vector<indVp>
 }
 
 
+/**
+ * Save the new level and backtrack (or undelete) a nogood to the previous
+ * registered level. 
+ * 
+ * @param[in] level The new level. 
+ */
+void IncNGNoGoodsManager::backtrack(int level)
+{
+    if (cspAC->getDecisionLevel() == level)
+        return;
+    
+    for (auto ng : nogoods) {
+        // restore the nogoods deleted during the last search
+        if (ng->deleted) {
+            if (ng->dlevel <= cspAC->getDecisionLevel())
+                continue;
+            ng->deleted = false;
+            ng->dlevel = -1;
+        }
+
+        if (ng->incNgList.size() <= 1 || ng->level() <= cspAC->getDecisionLevel())
+            continue;
+
+        int preB = ng->beta();
+        ng->incNgList.pop_back();
+        if (preB == ng->beta())
+            continue;
+        
+
+        // Put the nogood to its previous state by unwatching the range (beta, previousBeta]
+        if (preB < (int)ng->pos.size())
+            unwatch(ng, ng->pos[preB]);
+        for (auto n : ng->get[ng->beta()])
+            unwatch(ng, n);
+
+        for (int i = ng->beta() + 1; i < preB; i++) {
+            unwatch(ng, ng->pos[i]);
+            for (auto n : ng->neg[i + 1])
+                unwatch(ng, n);
+        }
+    }
+}
+
+
