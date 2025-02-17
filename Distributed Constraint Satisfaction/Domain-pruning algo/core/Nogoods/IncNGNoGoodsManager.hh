@@ -96,7 +96,7 @@ public:
     // Restore all nogoods to the state they were at @level
     void backtrack(int level);
     // Add a new nogood to the database and reinit the others
-    void restart(std::vector<std::vector<indVp>> negValues, std::vector<indVp> posValues)
+    void restart(std::vector<std::vector<indVp>> negValues, std::vector<indVp> posValues);
 
     bool revise(Variable* cur, std::vector<Variable*>& touched);
 
