@@ -134,3 +134,36 @@ void IncNGNoGoodsManager::reinitBase()
     }
 }
 
+
+/*
+####################
+#      Public      #
+####################
+*/
+
+/**
+ * Add the new nogood, reinit each nogoods and clear the valuesMap. 
+ * 
+ * @param[in] sigma : the branch where the conflict happend. 
+ */
+void IncNGNoGoodsManager::restart(vector<vector<indVp>> negValues, vector<indVp> posValues)
+{
+    if (!posValues.empty()) {
+        IncNG* ng = new IncNG(posValues, negValues, sizeVarMap);
+
+        size_t curNbNg = 0;
+        for (size_t i = 0; i < posValues.size(); ++i)
+            curNbNg += negValues[i + 1].size();
+        fprintf(stderr, " %8zu | \n", curNbNg + posValues.size());
+        Stats::nbNoGoods += curNbNg;
+
+        if (ng->m())
+            nogoods.push_back(ng);
+    } else {
+        fprintf(stderr, " %8d | \n", 0);
+    }
+
+    reinitBase();
+}
+
+
