@@ -211,3 +211,18 @@ void IncNGNoGoodsManager::backtrack(int level)
 }
 
 
+/**
+ * Called by the solver to check if some watched has been trigerred. 
+ * 
+ * @param[in] level The level where the function is called. 
+ * 
+ * @return true if conflict during filtering. 
+ */
+bool IncNGNoGoodsManager::revise(Variable* cur, std::vector<Variable*>& touched)
+{
+    stamp++;
+    for (auto node : varMap[cur->getId()])
+        if (node.counter > 0 && filter(node.nogoodn, touched))
+            return true;
+        return false;
+}
