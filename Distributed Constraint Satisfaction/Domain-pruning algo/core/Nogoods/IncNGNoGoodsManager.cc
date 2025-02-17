@@ -111,3 +111,26 @@ bool IncNGNoGoodsManager::filter(IncNG* ng, vector<Variable*>& touched)
 }
 
 
+void IncNGNoGoodsManager::reinitBase()
+{
+    for (int i = 0; i < sizeVarMap; ++i)
+        varMap[i].clear();
+
+    for (auto ng : nogoods) {
+        ng->incNgList.clear();
+        ng->incNgList.push_back({ (int)ng->pos.size(), 0, 1, 0 });
+        ng->deleted = false;
+        ng->dlevel = -1;
+        ng->stamp = -1;
+
+        for (int i = 0; i < sizeVarMap; ++i)
+            ng->watchMap[i] = -1;
+
+        watch(ng, ng->pos[0]);
+        for (auto n : ng->neg[1])
+            watch(ng, n);
+        if (ng->pos.size() > 1)
+            watch(ng, ng->pos[1]);
+    }
+}
+
