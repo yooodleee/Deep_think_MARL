@@ -49,3 +49,33 @@ bool IncNGNoGoodsManager::findNewBeta(IncNG* ng, int offset, vector<Variable*>& 
     return false;
 }
 
+/**
+ * If beta value is assigned, find a new one.
+ * 
+ * @param[in] ng a nogood.
+ */
+bool IncNGNoGoodsManager::updateBeta(IncNG* ng, vector<Variable*>& touched)
+{
+    indVp ivp = ng->pos[ng->beta()];
+    VP& vp = Variable::varProps[ivp];
+
+    if (!vp.toVar->isAssigned())
+        return false;
+
+    if (!vp.posInVar) { // If beta is assigned to the expected value : update it
+        if (findNewBeta(ng, ng->beta(), touched))
+            return true;
+        if (ng->m() != 0 && ng->beta() != ng->m())
+            return updateBeta(ng, touched);
+    } else {    // If beta is assigned to an unexpected value : truncate nogood
+        for (int i = ng->alpha(), beta = ng->beta(); i < beta; ++i)
+            if (!ng->neg[i + 1].empty()) {
+                ng->setM(beta + 1);
+                return false;
+            }
+        ng->setM(0);
+    }
+
+    return false;
+}
+
