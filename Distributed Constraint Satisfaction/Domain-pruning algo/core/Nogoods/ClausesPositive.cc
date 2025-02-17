@@ -1,5 +1,5 @@
 
-#include "ClausesPositive.cc"
+#include "ClausesPositive.hh"
 #include "LecoutreNoGoodsManager.hh"
 #include "Variable.hh"
 
