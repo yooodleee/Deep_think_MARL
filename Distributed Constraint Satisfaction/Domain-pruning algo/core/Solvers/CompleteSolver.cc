@@ -115,3 +115,29 @@ int CompleteSolver::search(int zeroing)
 
 
 
+indDomLocal CompleteSolver::PickValue(Variable* cur)
+{
+    if (Options::saving && cur->isValidLastChoice())
+        return cur->lastChoiceToDomLocalInd();
+    
+    if (Options::valueSelection == valueSelectionTypes::min)
+        return cur->getLowerBoundLocalDomInd();
+
+    if (Options::valueSelection == valueSelectionTypes::zero)
+        return 0;
+
+    if (Options::valueSelection == valueSelectionTypes::max)
+        return cur->getUpperBoundLocalDomInd();
+    
+    if (Options::valueSelection == valueSelectionTypes::last)
+        return cur->domainCurSize - 1;
+    
+    if (Options::valueSelection == valueSelectionTypes::vrand) {
+        return rand() % cur->domainCurSize;
+    }
+
+    throw runtime_error("Something went wrong (Options compatibility maybe!?)");
+}   // PickVariable
+
+
+
