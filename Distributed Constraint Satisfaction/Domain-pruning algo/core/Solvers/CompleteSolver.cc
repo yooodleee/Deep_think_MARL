@@ -161,3 +161,25 @@ Variable* CompleteSolver::PickVariable()
 
 
 
+Variable* CompleteSolver::heuristicDom()
+{
+    Variable* retV = nullptr;
+    int best = numeric_limits<int>::max();
+    int weight;
+
+    for (auto vTmp : problem->getVariables()) {
+        if (vTmp->isAssigned())
+            continue;
+
+        weight = vTmp->domainCurSize;
+        if (weight < best) {
+            best = weight;
+            retV = vTmp;
+        }
+    }
+
+    return retV;
+}
+
+
+
