@@ -235,3 +235,58 @@ Variable* CompleteSolver::heuristicDomWDeg()
 
 
 
+/**
+ * Allow to print the final message.
+ */
+int CompleteSolver::showFinal(int res)
+{
+    int ret = 0;
+
+    cout << "c" << endl
+         << "c # time = " << InfoSystem::timeElapsed() << endl 
+         << "c # Dec = " << Stats::nbDecisions << endl 
+         << "c # Propagate Calls = " << Stats::nbPropcalls << endl 
+         << "c # assignAt Calls = " << Stats::assignCall << endl 
+         << "c # removeAt Calls = " << Stats::rmCall << endl 
+         << "c # Run = " << Stats::run << endl 
+         << "c # Conflicts = " << Stats::conflict << endl;
+
+    uint64_t mem_used = InfoSystem::getMemUsed();
+    if (mem_used != 0)
+        cout << "c # Memory used = " << (double)mem_used / 1000 << " Mb" << endl;
+
+    if (Options::countSols == countTypes::all) {
+        cout << "c # Sols = " << Stats::nbSols << endl;
+        exit(40);
+    }
+
+    switch (res) {
+    case 0:
+        cout << "s SATISFIABLE" << endl 
+             << "c" << endl;
+        cout << "v <instantiation>" << endl 
+             << "v      <list>";
+        for (auto var : problem->getVariables())
+            cout << var->getName() << " ";
+        cout << "</list>" << endl 
+             << "v      <values>";
+        for (auto var : problem->getVariables())
+            cout << var->getVarPropFromLocalDomInd(0).va; << " ";
+        cout << "</values>" << endl 
+             << "v </instantiation>" << endl;
+        ret = 10;
+        break;
+
+    case 1:
+        cout << "s UNSATISFIABLE" << endl;
+        ret = 20;
+        break;
+
+    case 2:
+        cout << "c UNKNOWN" << endl;
+        ret = 30;
+        break;
+    }
+
+    return ret;
+}   // showFinal
