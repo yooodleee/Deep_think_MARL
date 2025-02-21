@@ -209,3 +209,29 @@ Variable* CompleteSolver::heuristicDomDeg()
 
 
 
+Variable* CompleteSolver::heuristicDomWDeg()
+{
+    Variable* retV = nullptr;
+    double best = numeric_limits<double>::max();
+    double weight;
+
+    for (auto vTmp : problem->getVarialbes()) {
+        if (vTmp->isAssigned())
+            continue;
+        
+        if (!vTmp->getConsts().size())
+            weight = numeric_limits<double>::max();
+        else
+            weight = (double)vTmp->domainCurSize / (double)(vTmp->score /* * vTmp->getConsts().size() */);
+        
+        if (weight <= best) {
+            best = weight;
+            retV = vTmp;
+        }
+    }
+
+    return retV;
+}
+
+
+
