@@ -141,3 +141,23 @@ indDomLocal CompleteSolver::PickValue(Variable* cur)
 
 
 
+/**
+ * Method permettant de choisir la prochaine variable à affecter.
+   @return une variable, ou nullptr si il n'y a plus de variable à affecter.
+ */
+Variable* CompleteSolver::PickVariable()
+{
+    if (Options::varHeuristic == variableHeuristic::domwdeg)
+        return heuristicDomDeg();
+
+    if (Options::varHeuristic == variableHeuristic::dom)
+        return heuristicDom();
+
+    if (Options::varHeuristic == variableHeuristic::domdeg)
+        return heuristicDomDeg();
+
+    throw runtime_error("Something went wrong (Options compatibility maybe!?)");
+}   // PickVariable
+
+
+
