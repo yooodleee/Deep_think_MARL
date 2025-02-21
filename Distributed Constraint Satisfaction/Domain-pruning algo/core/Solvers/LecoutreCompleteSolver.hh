@@ -7,14 +7,14 @@
 class LecoutreNoGoodsManager;
 
 
-class LecOutreCompleteSolver : public CompleteSolver {
+class LecoutreCompleteSolver : public CompleteSolver {
 protected:
     LecoutreNoGoodsManager* manager;
 
 
 public:
     /// Constructor
-    LecOutreCompleteSolver(Problem* p)
+    LecoutreCompleteSolver(Problem* p)
         : CompleteSolver(p)
         , manager(nullptr) {};
     
