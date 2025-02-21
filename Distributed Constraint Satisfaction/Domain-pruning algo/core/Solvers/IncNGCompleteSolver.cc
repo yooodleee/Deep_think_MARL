@@ -64,7 +64,7 @@ int IncNGCompleteSolver::search(int zeroing)
             cspAC->cancelUntil(0);
             manager->restart(nogoodStackVariable, propagateStackVariable);
 
-            for (size_t i = 0; stop = vecVar.size(); i < stop; ++i)
+            for (size_t i = 0, stop = vecVar.size(); i < stop; ++i)
                 nogoodStackVariable.clear();
             propagateStackVariable.clear();
         } else {    // new decision level
