@@ -363,3 +363,14 @@ bool Variable::keepOnlyVarProp(vector<vector<indVp>>& vals, int index, int level
 }   // keepOnlyVarProp
 
 
+bool Variable::keepOnlyVarProp(set<indVp>& VPs, int level, Constraint* ctr)
+{
+    cleanDBU();
+
+    for (auto v : VPs)
+        domainBoolUtil[v - domainStart] = true;
+
+    return delInDBU(level, ctr);
+}   // keepOnlyVarProp
+
+
