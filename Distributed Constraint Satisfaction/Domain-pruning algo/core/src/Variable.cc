@@ -29,3 +29,17 @@ void Expl::lock(Constraint* c, int lvl, unsigned long long ord)
     if (c && dynamic_cast<RefClause*>(c) != NULL)
         static_cast<RefClause*>(c)->isReason++;
 }
+
+
+void Expl::unlock()
+{
+    assert(level != -1);
+    if (ctr && dynamic_cast<RefClause*>(ctr) != NULL)
+        static_cast<RefClause*>(ctr)->isReason--;
+    
+    ctr = nullptr;
+    level = -1;
+    order = 0;
+}
+
+
