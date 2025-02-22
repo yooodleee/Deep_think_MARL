@@ -348,3 +348,18 @@ bool Variable::keepOnlyValues(vector<int>& vals, int level, Constraint* ctr)
 }   // keepOnlyValues
 
 
+bool Variable::keepOnlyVarProp(vector<vector<indVp>>& vals, int index, int level, Constraint* ctr)
+{
+    cleanDBU();
+
+    for (auto v : vals) {
+        if (v[index] == STAR)
+            return false;
+        else
+            domainBoolUtil[v[index] - domainStart] = true;
+    }
+
+    return delInDBU(level, ctr);
+}   // keepOnlyVarProp
+
+
