@@ -214,7 +214,7 @@ public:
     inline void setPuSizeLast(int n, int level)
     {
         if (saveSize.empty())
-            saveSize.push({ level, domainCurSize, n});
+            saveSize.push_back({ level, domainCurSize, n});
         else
             saveSize.top().puLastSize = n;
     }
@@ -329,6 +329,169 @@ public:
 
 
     /**
+     * Keep in current var only the vals where their index in varProps is in @vals[i][@index] with i in [0, vals.size()].
      * 
+     * @param[in] vals the matrix where get the column of values to keep
+     * @param[in] index the index of the column to keep
+     * @param[in] level the level when the deletion occurs. 
+     * 
+     * @return true if a value is deleted. 
      */
-}
+    bool keepOnlyVarProp(std::vector<std::vector<indVp>>& vals, int index, int level, Constraint* ctr = nullptr);
+
+
+    /**
+     * Keep in current var only the values where their index in varProps is in @VPs.
+     * 
+     * @param[in] VPs the set of varProps to keep
+     * @param[in] level the level when the deletion occurs. 
+     * 
+     * @return true if a value is deleted. 
+     */
+    bool keepOnlyVarProp(std::set<indVp>& VPs, int level, Constraint* ctr = nullptr);
+    bool keepOnlyVarProp(std::vector<indVp>& VPs, int level, Constraint* ctr = nullptr);
+
+
+    /// return true if @val belong to the domain and is still valid i.e. not deleted
+    inline bool isValidValud(int val)
+    {
+        if (val < getLowerBoundVal() && val > getUpperBoundVal())
+            return false;
+        
+        for (int i = 0; i < domainCurSize; ++i)
+            if (getVarPropFromLocalDomInd(i).val == val)
+                return true;
+        return false;
+    }
+
+
+    /// return the index of @val in varProps vector if found; -1 otherwise
+    inline indVp getIndFromValue(int val)
+    {
+        for (int i = 0; i < domainInitSize; ++i)
+            if (getVarPropFromLocalInd(i).val == val)
+                return domainStart + i;
+        return -1;
+    }
+
+
+    /**
+     * Remove the real vals above @val (excluded) at the level @level. 
+     * 
+     * @param[in] val the real value where stop the deletion. 
+     * @param[in] level the decision level when the deletion occurs. 
+     * 
+     * @return true if a value is removed. 
+     */
+    inline bool removeValuesAbove(int val, int level, Constraint* ctr = nullptr)
+    {
+        for (int i = domainInitSize - 1; i >= 0 && Variable::varProps[domainStart + i].val < val; --i)
+            if (removeAt(Variable::varProps[domainStart + i].posInVar, level, ctr))
+                return true;
+        return false;
+    }
+
+
+    /**
+     * Remove the real values under @val (excluded) at the level @level. 
+     * 
+     * @param[in] val the real value where stop the deletion. 
+     * @param[in] level the decision level when the deletion occurs. 
+     * @param[in] offset Local index of varProps used to bypass some values to perform
+     * 
+     * @return true if removeAt fails (WPO)
+     */
+    inline bool removeValuesUnder(int val, int level, Constraint* ctr = nullptr, indVpLocal offset = 0)
+    {
+        for (int i = offset; i < domainInitSize && Variable::varProps[domainStart + i].val < val; ++i)
+            if (removeAt(Variable::varProps[domainStart + i].posInVar, level, ctr))
+                return true;
+        return false;
+    }
+
+
+    /**
+     * Remove the real values contains in [@from, @to] at the level @level. 
+     * 
+     * @param[in] from the real value of the lowerbound of the set to delete. 
+     * @param[in] to the real value of the upperbound of the set to delete. 
+     * @param[in] level the decision level when the deletion occurs. 
+     * 
+     * @return true if removeValueUnder fails (WPO)
+     */
+    inline bool removeValues(int from, int to, int level, Constraint* ctr = nullptr)
+    {
+        int i = 0;
+        while (i < domainInitSize && Variable::varProps[domainStart + i].val < from)
+            ++i;
+        return removeValuesUnder(to + 1, level, ctr, i);
+    }
+
+
+    /**
+     * Remove the val @vals at the level @level. 
+     * 
+     * @param[in] val a real value to remove. 
+     * @param[in] level the decision level when the deletion occurs. 
+     * 
+     * @return true if removeAt fails (WPO)
+     */
+    inline bool removeValue(int val, int level = 0, Constraint* ctr = nullptr)
+    {
+        if (val < getLowerBoundVal() || val > getUpperBoundVal())
+            return false;
+        
+        for (int i = 0; i < domainCurSize; ++i)
+            if (getVarPropFromLocalDomInd(i).val == val)
+                return removeAt(i, level, ctr);
+        return false;
+    }
+
+
+    /**
+     * Remove all the val in @vals at the level @level. 
+     * 
+     * @param[in] vals real value to remove. 
+     * @param[in] level the decision level when the deletion occurs. 
+     * 
+     * @return true if removeAt fails (WPO)
+     */
+    inline bool removeValues(std::vector<int>& vals, int level, Constraint* ctr = nullptr)
+    {
+        for (auto v : vals)
+            if (removeValue(v, level, ctr))
+                return true;
+        return false;
+    }
+
+
+    /**
+     * Remove all the val in @setLocalVp at the level @level. 
+     * 
+     * @param[in] setLocalVp indices of the vals in varProps. 
+     * @param[in] level the decision level when the deletion occurs. 
+     * 
+     * @return true if removeAt fails (WPO)
+     */
+    inline bool removeSetOfIndVpLocal(std::vector<indVpLocal>& setLocalVp, int level, Constraint* ctr = nullptr)
+    {
+        for (auto v : setLocalVp)
+            if (removeAt(indVPLocalToIndDomLocal(v), level, ctr))
+                return true;
+        return false;
+    }
+};
+
+
+
+/// Functor used to compare vars in sets
+struct variableIdCmp {
+    bool operator()(Variable* x, Variable* y)
+    {
+        return x->getId() < y->getId();
+    }
+};
+
+
+
+#endif  // VARIABLE_H_
