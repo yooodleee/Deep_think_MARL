@@ -1,0 +1,46 @@
+
+#include "Restart.hh"
+#include "Variable.hh"
+
+
+
+void Restart::Inc()
+{
+    Stats::run++;
+    /* Variable::gblOrder = 0; */
+    nbRst++;
+    
+    switch (Options::optRst) {
+    case rstTypes::hundred_perc:
+        nbConflictBfRst += nbConflictBfRst;
+        break;
+    
+    case rstTypes::luby10:
+        nbConflictBfRst = (Luby(nbRst + 1) * 10);
+        break;
+    
+    case rstTypes::luby100:
+        nbConflictBfRst = (Luby(nbRst + 1) * 100):
+        break;
+
+    case rstTypes::luby50:
+        nbConflictBfRst = (Luby(nbRst + 1) * 50);
+        break;
+    
+    case rstTypes::low:
+        nbConflictBfRstD *= 1.03;
+        nbConflictBfRst = static_cast<int>(floor(nbConflictBfRstD));
+        break;
+
+    case rstTypes::ten_perc:
+        nbConflictBfRstD *= 1.1;
+        nbConflictBfRst = static_cast<int>(floor(nbConflictBfRstD));
+        break;
+
+    default:
+        nbConflictBfRst += nbConflictBfRst >> 1;
+        break;
+    }
+}
+
+
