@@ -123,3 +123,55 @@ Variable::Variable(string n, vector<int> v)
 }   // Variable
 
 
+ostream& operator<<(ostream& out, const Variable& var)
+{
+    out << "Variable " << var.id << " informations ______________" << endl;
+    out << "Name : " << var.name << endl;
+    out << "Nb ctr involved : " << var.consts.size() << endl;
+
+    if (var.domainCurSize == 1)
+        out << "Assigned to " << Variable::varProps[Variable::domValues[var.domainStart]].val << endl;
+    
+    out << "Bounds => ind : " << var.lowerBound << " ~ " << var.upperBound
+        << " - indVpLocal : " << var.lowerBound - var.domainStart << " ~ " << var.upperBound - var.domainStart
+        << " - values : " << Variable::varProps[var.lowerBound].val << " ~ " << Variable::varProps[var.upperBound].val << endl;
+    
+    out << "Cur Domain info => ind : " << var.domainStart << " ~ " << var.domainStart + var.domainInitSize - 1
+        << " sz=" << var.domainCurSize << " | ";
+    
+    if (var.saveSize.empty()) {
+        for (int i = 0; i < var.domainInitSize; ++i)
+            out << Variable::varProps[Variable::domValues[var.domainStart + i]].val << " ";
+    } else {
+        int i = 0;
+        for (; i < var.saveSize.top().sizeDom; ++i)
+            out << Variable::varProps[Variable::domValues[var.domainStart + i]].val << " ";
+        out << "(";
+        
+        for (; i < var.domainInitSize; ++i)
+            out << Variable::varProps[Variable::domValues[var.domainStart + i]].val << " ";
+        out << ")";
+    }
+
+    out << endl
+        << "Init Domain info : sz=" << var.domainInitSize << " | ";
+    
+    for (int i = 0; i < var.domainInitSize; ++i)
+        out << Variable::varProps[var.domainStart + i].val << " ";
+    
+    if (!var.saveSize.empty()) {
+        std::stack<VarSave> printableStack(var.saveSize);
+        out << endl
+            << "{";
+        for (l !printableStack.empty(); printableStack.pop()) {
+            out << "[ L:" << printableStack.top().level << ", S:" << printableStack.top().sizeDom << "] ";
+        }
+        out << "}";
+    }
+    out << endl
+        << "____________________________________________________" << endl;
+    
+    return out;
+}   // operator<<
+
+
