@@ -43,3 +43,34 @@ void Expl::unlock()
 }
 
 
+Variable::Variable(string n)
+    : name(n)
+{
+    id = Stats::nbVars++;
+}
+
+
+Variable::Variable(string n, int lb, int ub)
+    : Variable(n)
+{
+    assert(lb < ub);
+
+    domainCurSize = domainInitSize = ub - lb + 1;
+    domainStart = domValues.size();
+    lowerBound = varProps.size();
+
+    domainBoolUtil = new bool[domainInitSize]();
+
+    for (int i = lb; i <= ub; ++i) {
+        Variable::domValues.push_back(varProps.size());
+        valueToVarPropInd[i] = varProps.size();
+
+        if ((int)varProps.size() == numeric_limits<int>::max())
+            throw runtime_error("Too much values");
+        
+        Variable::varProps.push_back(VP(i, i - lb, this, 0));
+        Variable::vpExpl.push_back(Expl());
+    }
+
+    upperBound = varProps.size() - 1;
+}   // Variable
