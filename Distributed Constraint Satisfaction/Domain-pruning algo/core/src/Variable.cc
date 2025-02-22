@@ -237,3 +237,83 @@ bool Variable::assignAt(indDomLocal index, int level, Constraint* ctr)
 }   // assignAt
 
 
+bool Variable::removeAt(indDomLocal index, int level, Constraint* ctr)
+{
+    Stats::rmCall++;
+
+    if (index >= domainCurSize)
+        return false;
+    
+    if (!index && domainCurSize == 1)
+        return true;
+    
+    if (saveSize.empty() || saveSize.top().level != level)
+        saveSize.push({ level, domainCurSize, domainCurSize });
+    
+    indVp ivpToDel = domValuesToVarProp(domainStart + index);
+
+    if (Options::Verbose >= verbose::high) {
+        if (ctr == nullptr)
+            cerr << "(" << level << ") ";
+        
+        else {
+            if ((unsigned)ctr->getId() >= Stats::saveNbConstraints)
+                cerr << ctr->getName();
+            else
+                cerr << "ctr" << ctr->getId();
+        }
+        cerr << " ¬" << ivpToDel;
+    }
+
+    Variable::vpExpl[ivpToDel].lock(ctr, level, ++gblOrder);
+
+    Variable::varProps[ivpToDel].state = NEG;
+
+    --domainCurSize;
+    saveSize.top().sizeDom--;
+
+    setVarPropIndInDomValues(domainStart + index, domValuesToVarProp(domainStart + domainCurSize));
+    setVarPropIndInDomValues(domainStart + domainCurSize, ivpToDel);
+
+    setPosOfVarPropInVar(domainStart + index, index);
+    setPosOfVarPropInVar(domainStart + domainCurSize, domainCurSize);
+
+    if (lowerBound == ivpToDel) {
+        for (int i = lowerBound + 1; i <= upperBound; ++i) {
+            if (Variable::varProps[i].posInVar < domainCurSize) {
+                lowerBound = i;
+                break;
+            }
+        }
+    }
+
+    if (upperBound == ivpToDel) {
+        for (int i = upperBound - 1; i >= lowerBound; --i) {
+            if (Variable::varProps[i].posInVar < domainCurSize) {
+                upperBound = i;
+                break;
+            }
+        }
+    }
+
+    if (domainCurSize == 1) {
+        Variable::varProps[domValuesToVarProp(domainStart)].state = POS;
+
+        Variable::vpExpl[domValuesToVarProp(domainStart)].lock(Domain::domCtr, level, ++gblOrder);
+
+        if (ctr == nullptr && level)
+            wasPushed = lastPushed = true;
+        
+        if (Options::Verbose >= verbose::high)
+            cerr << " => " << domValuesToVarProp(domainStart);
+    }
+
+    if (Options::Verbose >= verbose::high)
+        cerr << endl;
+
+    assert(domainCurSize != 0);
+
+    return false;
+}   // removeAt
+
+
