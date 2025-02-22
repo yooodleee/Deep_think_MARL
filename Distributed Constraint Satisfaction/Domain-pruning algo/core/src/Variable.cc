@@ -337,3 +337,14 @@ bool Variable::keepOnlyValues(Variable* var, int k, int level, Constraint* ctr)
 }   // keepOnlyValues
 
 
+bool Variable::keepOnlyValues(vector<int>& vals, int level, Constraint* ctr)
+{
+    cleanDBU();
+
+    for (auto v : vals)
+        domainBoolUtil[valueToVarPropInd[v] - domainStart] = true;
+    
+    return delInDBU(level, ctr);
+}   // keepOnlyValues
+
+
