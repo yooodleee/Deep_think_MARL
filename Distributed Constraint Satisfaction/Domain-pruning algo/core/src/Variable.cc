@@ -74,3 +74,52 @@ Variable::Variable(string n, int lb, int ub)
 
     upperBound = varProps.size() - 1;
 }   // Variable
+
+
+Variable::Variable(string n, int onlyVal)
+    : Variable(n)
+{
+    domainCurSize = domainInitSize = 1;
+    domainStart = domValues.size();
+
+    domainBoolUtil = new bool[domainInitSize]();
+
+    lowerBound = upperBound = varProps.size();
+
+    if ((int)varProps.size() == numeric_limits<int>::max())
+        throw runtime_error("Too much values");
+    
+    Variable::domValues.push_back(varProps.size());
+    Variable.vpExpl.push_back(Expl());
+}   // Variable
+
+
+Variable::Variable(string n, vector<int> v)
+    : Variable(n)
+{
+    assert(!v.empty());
+
+    domainCurSize = domainInitSize = v.size();
+    domainStart = domValues.size();
+    lowerBound = varProps.size();
+
+    domainBoolUtil = new bool[domainInitSize]();
+
+    sort(v.begin(), v.end());
+
+    int i = 0;
+    for (auto val : v) {
+        Variable::domValues.push_back(varProps.size());
+        valueToVarPropInd[val] = varProps.size();
+
+        if ((int)varProps.size() == numeric_limits<int>::max())
+            throw runtime_error("Too much values");
+
+        Variable::varProps.push_back(VP(val, i++, this, 0));
+        Variable::vpExpl.push_back(Expl());
+    }
+
+    upperBound = varProps.size() - 1;
+}   // Variable
+
+
