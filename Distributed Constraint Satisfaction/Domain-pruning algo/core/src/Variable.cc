@@ -175,3 +175,65 @@ ostream& operator<<(ostream& out, const Variable& var)
 }   // operator<<
 
 
+bool Variable::assignAt(indDomLocal index, int level, Constraint* ctr)
+{
+    Stats::assignCall++;
+
+    if (index >= domainCurSize)
+        return false;
+    
+    if (saveSize.empty() || saveSize.top().level != level)
+        saveSize.push({ level, domainCurSize, domainCurSize });
+    
+    indVp ivpToAssign = domValuesToVarProp(domainStart + index);
+
+    if (index) {
+        setVarPropIndInDomValues(domainStart + index, domValuesToVarProp(domainStart));
+        setVarPropIndDomValues(domainStart, ivpToAssign);
+
+        setPosOfVarPropInVar(domainStart + index, index);
+        setPosOfVarPropInVar(domainStart, 0);
+    }
+
+    if (Options::Verbose >= verbose::high) {
+        if (ctr == nullptr)
+            cerr << "(" << level << ")";
+        
+        else if ((unsigned)ctr->getId() >= Stats::saveNbConstraints)
+            cerr << ctr->getName();
+        
+        else
+            cerr << "ctr" << ctr->getId();
+        
+        cerr << " " << domValuesToVarProp(domainStart) << " => ";
+    }
+
+    for (int i = 1; i < domainCurSize; i++) {
+        Variable::varProps[domValuesToVarProp(domainStart + i)].state = NEG;
+
+        Variable::vpExpl[domValuesToVarProp(domainStart + i)].lock(ctr, level, ++gblOrder);
+
+        if (Options::Verbose >= verbose::high)
+            cerr << "¬" << domValuesToVarProp(domainStart + i) << " ";
+    }
+
+    if (Options::Verbose >= verbose::high)
+        cerr << endl;
+    
+    assert(useless ? true : Variable::vpExpl[domValuesToVarProp(domainStart)].level == -1);
+    if (!useless && Variable::vpExpl[domValuesToVarProp(domainStart)].level == -1)
+        Variable::vpExpl[domValuesToVarProp(domainStart)].lock(ctr, level, ++gblOrder);
+    
+    Variable::varProps[ivpToAssign].state = POS;
+
+    if (ctr == nullptr && level)
+        wasPushed = lastPushed = true;
+    
+    saveSize.top().sizeDom = domainCurSize = 1;
+    lowerBound = upperBound = ivpToAssign;
+    lastChoice = lowerBound;
+
+    return true;
+}   // assignAt
+
+
