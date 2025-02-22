@@ -265,5 +265,70 @@ public:
     void backtrackToLevel(int level);   /// perform a backtrack i.e. restore the values deleted after @level
 
     friend std::ostream& operator<<(std::ostream& out, const Variable& var);    /// override operator << to print a variable
+
     
+    /**
+     * Keep only one value in the domain. 
+     * 
+     * @param[in] index, the position of the value which is kept. 
+     * @param[in] level, the level when the assignation occurs. 
+     */
+    bool assignAt(indDomLocal index, int level, Constraint* ctr = nullptr);
+
+
+    /**
+     * Keep only the value @val in the domain. 
+     * 
+     * @param[in] value, the value which is kept. 
+     * @param[in] level, the level when the assignation ocurrs. 
+     * 
+     * @return false if something went wrong, i.e. if the value doesn't exist or was already delete
+     */
+    inline bool assignTo(int val, int level = 0, Constraint* ctr = nullptr)
+    {
+        for (int i = 0; i < domainCurSize; ++i)
+            if (getVarPropFromLocalDomInd(i).val == val) {
+                return assignAt(i, level, ctr);
+            }
+        return false;
+    }
+
+
+    /**
+     * Delete a value for the current decision level. 
+     * 
+     * @param[in] index, the position of the value which is removed in domValues. 
+     * @param[in] level, the level when the deletion occurs. 
+     * 
+     * @return true if deleting leads to domain wipeout
+     */
+    bool removeAt(indDomLocal index, int level = 0, Constraint* ctr = nullptr);
+
+
+    /**
+     * Keep in current var only the values a + k with a in @var domain. 
+     * 
+     * @param[in] var the variable where get the values
+     * @param[in] k the integer add to each values
+     * @param[in] level the level when the deletion occurs. 
+     * 
+     * @return true if a value is deleted. 
+     */
+    bool keepOnlyValues(Variable* var, int k, int level, Constraint* ctr = nullptr);
+
+
+    /**
+     * Keep in current var only the values in the vector @val. 
+     * 
+     * @param[in] vals the vector where get the values
+     * @param[in] level the level when the deletion occurs. 
+     * 
+     * @return true if a value is deleted. 
+     */
+    bool keepOnlyValues(std::vector<int>& vals, int level, Constraint* ctr = nullptr);
+
+
+    /**
+     * 
+     */
 }
