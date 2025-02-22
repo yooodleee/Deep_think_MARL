@@ -317,3 +317,23 @@ bool Variable::removeAt(indDomLocal index, int level, Constraint* ctr)
 }   // removeAt
 
 
+bool Variable::keepOnlyValues(Variable* var, int k, int level, Constraint* ctr)
+{
+    cleanDBU();
+
+    for (int i = 0, stop = var->domainCurSize; i < stop; ++i) {
+        int val = var->getVarPropFromLocalDomInd(i).val + k;
+        if (val < getLowerBoundVal() || val > getUpperBoundVal())
+            continue;
+        
+        for (int i = 0; i < domainCurSize; ++i)
+            if (getVarPropFromLocalDomInd(i).val == val) {
+                domainBoolUtil[indDomLocalToIndVPLocal(i)] = true;
+                break;
+            }
+    }
+
+    return delInDBU(level, ctr);
+}   // keepOnlyValues
+
+
