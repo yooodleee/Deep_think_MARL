@@ -386,3 +386,41 @@ bool Variable::keepOnlyVarProp(vector<indVp>& VPs, int level, Constraint* ctr)
 
 
 
+void Variable::backtrackToLevel(int level)
+{
+    if (saveSize.empty() || saveSize.top().level < level)
+        return;
+    
+    while (saveSize.size() && level < saveSize.top().level)
+        saveSize.pop();
+    
+    int saveDomSize = (domainCurSize == 1) ? 0 : domainCurSize;
+
+    wasPushed = lastPushed = false;
+
+    if (saveSize.empty()) {
+        domainCurSize = domainInitSize;
+        lowerBound = domainStart;
+        upperBound = domainStart + domainCurSize - 1;
+
+        for (int i = saveDomSize; i < domainCurSize; ++i) {
+            indVp tmp = indDomLocalToIndVP(i);
+            Variable::varProps[tmp].state = UNDEF;
+        }
+    } else {
+        domainCurSize = saveSize.top().sizeDom;
+
+        for (int i = saveDomSize; i < domainCurSize; ++i) {
+            indVp tmp = indDomLocalToIndVP(i);
+            Variable::varProps[tmp].state = UNDEF;
+
+            if (lowerBound > tmp)
+                lowerBound = tmp;
+            if (upperBound < tmp)
+                upperBound = tmp;
+        }
+    }
+
+    if (domainCurSize == 1)
+        Variable::varProps[indDomLocalToIndVP(0)].state = POS;
+}   // backtrackToLevel
