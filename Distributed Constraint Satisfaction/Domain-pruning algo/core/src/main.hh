@@ -1256,3 +1256,270 @@ void XCSP3Callbacks::buildConstraintExactlyK(string id, vector<XVariable*>& list
 }
 
 
+void XCSP3Callbacks::buildConstraintExactlyVariable(string id, vector<XVariable*>& list, int value, XVariable* x)
+{
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    vars.push_back(getMyVar(x));
+
+    vecCont.push_back(new ConstraintExactlyKVariable(id, vars, value));
+}
+
+
+void XCSP3Callbacks::buildConstraintNValues(string id, vector<XVariable*>& list, XCondition& xc)
+{
+    if (xc.operandType == INTEGER) {
+        if (xc.op == GT && xc.val == 1)
+            buildConstraintNotAllEqual(id, list);
+        else {
+            std::cout << "s UNSUPPORTED" << endl;
+            throw runtime_error("Unsupported case for nValues");
+        }
+
+    } else {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Unsupported case for nValues");
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintCardinality(string id, vector<XVariable*>& list, vector<int> values, vector<int>& intOccurs, bool closed)
+{
+    if (intOccurs.size() != values.size())
+        throw std::logic_error("Cardinalty: Occurs and values must have the same size");
+
+    for (size_t i = 0; i < intOccurs.size(); i++)
+        buildConstraintExactly(id, list, values[i], intOccurs[i]);
+}
+
+
+void XCSP3Callbacks::buildConstraintCardinality(string id, vector<XVariable*>& list, vector<int> values, vector<XVariable*>& varOccurs, bool closed)
+{
+    if (varOccurs.size() != values.size())
+        throw std::logic_error("Cardinality: Occurs and values must have the same size");
+
+    for (size_t i = 0; i < varOccurs.size(); i++)
+        buildConstraintExactlyVariable(id, list, values[i], varOccurs[i]);
+}
+
+
+void XCSP3Callbacks::buildConstraintCardinality(string id, vector<XVariable*>& list, vector<int> values, vector<XInterval>& intervalOccurs, bool closed)
+{
+    if (intervalOccurs.size() != values.size())
+        throw std::logic_error("Cardinality: Occurs and values must have the same size");
+
+    for (size_t i = 0; i < intervalOccurs.size(); i++) {
+        buildConstraintAtLeast(id, list, values[i], intervalOccurs[i].min);
+        buildConstraintAtMost(id, list, values[i], intervalOccurs[i].max);
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintElement(string id, vector<int>& list, int startIndex, XVariable* index, RankType rank, XVariable* value)
+{
+    vector<Variable*> vars({ getMyVar(index), getMyVar(value) });
+    vector<vector<ind>> tuples;
+
+    Variable* idx = vars[0];
+    Variable* val = vars[1];
+
+    for (int a = 0; a < idx->domainCurSize; ++a) {
+        int v = idx->getVarPropFromLocalDomInd(a).val - startIndex;
+        vector<ind> tmp;
+
+        if (v >= a && v < (int)list.size() && val->isValidValue(list[v])) {
+            tmp.push_back(idx->getVarPropIndFromValue(v + startIndex));
+            tmp.push_back(val->getVarPropIndFromValue(list[v]));
+        }
+        tuples.push_back(tmp);
+    }
+
+    Constraint* newCont = new ConstraintExtN(id, vars, tuples);
+
+    vecCont.push_back(newCont);
+    vecBtConst.push_back(newCont);
+}
+
+
+void XCSP3Callbacks::buildConstraintElement(string id, vector<XVariable*>& list, int startIndex, XVariable* i, RankType rank, int value)
+{
+    list.push_back(i);
+
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    vecCont.push_back(new ConstraintElementConstant(id, vars, var.size() - 1, value, startIndex));
+}
+
+
+void XCSP3Callbacks::buildConstraintElement(string id, vector<XVariable*>& list, int startIndex, XVariable* i, RankType rank, XVariable* v)
+{
+    list.push_back(i);
+    list.push_back(v);
+
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    vecCont.push_back(new ConstraintElementVariable(id, vars, vars.size() - 2, startIndex));
+}
+
+
+void XCSP3Callbacks::buildConstraintElement(string id, vector<XVariable*>& list, int value)
+{
+    buildConstraintAtLeast(id, list, value, 1);
+}
+
+
+void XCSP3Callbacks::buildConstraintChannel(string id, vector<XVariable*>& list1, int startIndex1, vector<XVariable*>& list2, int startIndex2)
+{
+    if (startIndex1) {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Unsupported Channel with startIndex1");
+    }
+
+    vector<Variable*> X;
+    vector<Variable*> Y;
+    toMyVariables(list1, X);
+    toMyVariables(list2, Y);
+
+    for (size_t i = 0; i < X.size(); i++) {
+        vector<Variable*> vars(v);
+        vars.push_back(x[i]);
+        vecCont.push_back(new ConstraintElementConstant(id, vars, vars.size() - 1, i, startIndex2));
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintChannel(string id, vector<XVariable*>& list, int startIndex, XVariable* value)
+{
+    int i = 0;
+    for (XVariable* x : list) {
+        string tmp = "iff(" + x->id + "," + "eq(" + value->id + "," + std::to_string(i) + "))";
+        i++;
+        buildConstraintIntension(id, new XCSP3Core::Tree(tmp));
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintIntentiation(string id, vector<XVariable*>& list, vector<int>& values)
+{
+    assert(list.size() == values.size());
+
+    for (size_t i = 0; i < list.size(); i++)
+        vecCont.push_back(new ConstraintExtUnary(id, getMyVar(list[i]), values[i], true));
+}
+
+
+void show_help()
+{
+    cerr << "####################################" << endl;
+    cerr << "#               HELP               #" << endl;
+    cerr << "####################################" << endl;
+    cerr << endl;
+    cerr << "Advanced help with \"-moreHelp\" (Options, etc.)" << endl;
+    cerr << endl;
+    cerr << "    ./cspSolver BENCHNAME.xml method {-options} " << endl;
+    cerr << "    methods:  " << endl;
+    cerr << "       -complete" << endl;
+    cerr << "       -incng" << endl;
+    cerr << "       -nld" << endl;
+    cerr << "       -ngen" << endl;
+    cerr << "       -ca" << endl;
+    cerr << endl;
+    cerr << "Print bench details: " << endl;
+    cerr << "    ./cspSolver BENCHNAME -infosCSP " << endl;
+    cerr << endl;
+} // show_help
+
+
+void show_advanced_help()
+{
+    cerr << "####################################" << endl;
+    cerr << "#      ADVANCED HELP -- OPTIONS    #" << endl;
+    cerr << "####################################" << endl;
+    cerr << endl;
+    cerr << "Solve XCSP3: (compile with \"make\")" << endl;
+    cerr << "      ./cspSolver BENCHNAME.xml method {-options} " << endl;
+    cerr << "      methods:  " << endl;
+    cerr << "           -complete (standard mac)" << endl;
+    cerr << "           -incng    (Increasing Nogoods -- Lee et al. 2014/2016)" << endl;
+    cerr << "           -nld      (Negative Last Decision Nogoods -- Lecoutre et al. 2007)" << endl;
+    cerr << "           -ngen     (Generalized Nogood from Restart)" << endl;
+    cerr << "           -ca       (Conflict Analysis -- SAT-like)" << endl;
+    cerr << endl;
+    cerr << endl;
+    cerr << "Options:" << endl;
+    cerr << endl;
+    cerr << "   Heuristics -- Values" << endl;
+    cerr << "       -valMin     => minimum in domain" << endl;
+    cerr << "       -valMax     => maximum in domain" << endl;
+    cerr << "       -valRand    => random in domain" << endl;
+    cerr << "       -valFirst   => first one in domain sparse set " << endl;
+    cerr << "       -valLast    => last one in domain in sparse set " << endl;
+    cerr << endl;
+    cerr << "   Heuristics -- Variables" << endl;
+    cerr << "       -dom " << endl;
+    cerr << "       -domdeg " << endl;
+    cerr << "       -domwdeg/-dwd " << endl;
+    cerr << endl;
+    cerr << "   Heuristics -- Miscellaneous" << endl;
+    cerr << "       -saving     => Tries to assign a var at the same value as before" << endl;
+    cerr << "       -refutation " << endl;
+    cerr << endl;
+    cerr << "   Miscellaneous" << endl;
+    cerr << "       -sols       => Count Solutions (complete/nld) " << endl;
+    cerr << "       -verb=n     => n in 0..3, Verbosity level (default 1)" << endl;
+    cerr << endl;
+}   // show_help
+
+
+void print_infos()
+{
+    cout << endl
+         << "####################################" << endl;
+         << " Type: " << ((typeCSP == CSP) ? "CSP" : ((typeCSP == COP) ? "COP" : "UNKNOWN")) << endl
+         << " Vars: " << mapping.size() << endl 
+         << " VarProps: " << Variable::varProps.size() << endl 
+         << " Constraints: " << vecCont.size() << endl 
+         << " Arity: " << (Stats::minArity > Stats::maxArity ? 0 : Stats::minArity) << ".." << Stats::maxArity << endl 
+         << "####################################" << endl;
+}
+
+
+/**
+ * Funtion to create a solver. 
+ */
+Solver* create_solver(int seed, int argc, char** argv)
+{
+    int method = -1;
+
+    if (Options::load_options(argc, argv, method)) {
+        show_help();
+        exit(0);
+    }
+
+    problem->init(vecCont, vecBtConst);
+
+    if (method == 1)
+        return new CompleteSolver(problem);
+    if (method == 2)
+        return new IncNGCompleteSolver(problem);
+    if (method == 3)
+        return new GeneralizedCompleteSolver(problem);
+    if (method == 4)
+        return new LecoutreCompleteSolver(problem);
+    if (method == 5)
+        return new ConflictAnalysisSolver(problem);
+    if (method == 10) {
+        print_infos();
+        exit(0);
+    }
+
+    show_help();
+    exit(0);
+}
+
+
+
+#endif  // ARCH_XCSP3Callbacks_H_
