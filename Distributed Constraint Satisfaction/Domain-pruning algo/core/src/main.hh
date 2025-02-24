@@ -608,3 +608,313 @@ void XCSP3Callbacks::buildConstraintAlldifferent(string id, vector<XVariable*>& 
 }
 
 
+void XCSP3Callbacks::buildConstraintAlldifferentExcept(string id, vector<XVariable*>& list, vector<int>& except)
+{
+    assert(except.size() == 1);
+
+    for (size_t i = 0; i < list.size(); i++)
+        for (size_t j = i + 1; j < list.size(); j++)
+            buildConstraintIntension(id,
+                new Tree("or(ne(" + list[i]->id + "," + list[j]->id + "), "
+                    + "eq(" + list[i]->id + "," + to_string(except[0]) + "))"));
+}
+
+
+vector<Variable*> createScope(vector<Variable*> vars1, vector<Variable*> vars2)
+{
+    set<Variable*, variableIdCmp> varsSet(vars1.begin(), vars1.end());
+    copy(vars2.begin(), vars2.end(), inserter(varsSet, varsSet.end()));
+    return vector<Variable*>(varsSet.begin(), varsSet.end());
+}
+
+
+vector<int> varsToScope(vector<Variable*> list, vector<Variable*> scope)
+{
+    vector<int> ret;
+
+    for (auto l : list) {
+        auto f = find(scope.begin(), scope.end(), l);
+        ret.push_back(f - scope.begin());
+    }
+
+    assert(ret.size() == list.size());
+    return ret;
+}
+
+
+void createExtensionDistinctVector(string id, vector<XVariable*>& l1, vector<XVariable*>& l2)
+{
+    assert(l1.size() == l2.size());
+
+    vector<Variable*> vars1, vars2;
+    toMyVariables(l1, vars1);
+    toMyVariables(l2, vars2);
+
+    vector<Variable*> scope = createScope(vars1, vars2);
+    vector<int> list1 = varsToScope(vars1, scope);
+    vector<int> list2 = varsToScope(vars2, scope);
+
+    vector<vector<indVp>> tuples;
+    for (size_t i = 0; i < list1.size(); i++) {
+        Variable* x = scope[list1[i]];
+        Variable* y = scope[list2[i]];
+
+        if (x->getId() == y->getId())
+            continue;
+        
+        int xDomStart = x->domainStart;
+        int yDomStart = y->domainStart;
+
+        for (int j = 0; j < x->domainInitSize; j++) {
+            int ivp1 = xDomStart + j;
+            for (int k = 0; k < y->domainInitSize; k++) {
+                int ivp2 = yDomStart + k;
+
+                if (Variable::varProps[ivp1].val == Variable::varProps[ivp2].val)
+                    continue;
+                
+                vector<indVp> tmp(scope.size(), STAR);
+                tmp[list1[i]] = ivp1;
+                tmp[list2[i]] = ivp2;
+                tuples.push_back(tmp);
+            }
+        }
+    }
+
+    ConstraintExtN* newCont = new ConstraintExtN(id, scope, tuples);
+    vecCont.push_back(newCont);
+    vecBtConst.push_back(newCont);
+}
+
+
+void XCSP3Callbacks::buildConstraintAlldifferentList(string id, vector<vector<XVariable*>>& lists)
+{
+    for (size_t i = 0; i < lists.size() - 1; ++i)
+        for (size_t j = i + 1; j < lists.size(); ++j)
+            createExtensionDistinctVector("", lists[i], lists[j]);
+}
+
+
+void XCSP3Callbacks::buildConstraintAlldifferentMatrix(string id, vector<vector<XVariable*>>& matrix)
+{
+    for (auto line : matrix)
+        buildConstraintAlldifferent("", line);
+    
+    for (size_t i = 0; i < matrix[0].size(); ++i) {
+        vector<XVariable*> column;
+        for (auto line : matrix)
+            column.push_back(line[i]);
+        buildConstraintAlldifferent("", column);
+    }
+}
+
+
+void sum(string id, vector<Variable*>& vars, int limit, OrderType op)
+{
+    switch (op) {
+    case LT:
+        limit--;
+    case LE:
+        vecCont.push_back(new ConstraintSumLE(id, vars, limit));
+        break;
+    case GT:
+        limit++;
+    case GE:
+        vecCont.push_back(new ConstraintSumGE(id, vars, limit));
+        break;
+    case EQ:
+        vecCont.push_back(new ConstraintSumEQ(id, vars, limit));
+        break;
+    case NE:
+        vecCont.push_back(new ConstraintSumNE(id, vars, limit));
+        break;
+    /* case IN:
+        vecCont.push_back(new ConstraintSumGE(id, vars, cond.min));
+        vecCont.push_back(new ConstraintSumLE(id, vars, cond.max));
+        break;
+    */
+    default:
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Operator not supported for sum");
+        break;
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintSum(string id, vector<XVariable*>& list, XCondition& cond)
+{
+    if (cond.operandType == VARIABLE) {
+        vector<int> coefficients(list.size(), 1);
+        buildConstraintSum(id, list, coefficients, cond);
+        return;
+    }
+
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    sum(id, vars, cond.val, cond.op);
+}
+
+
+OrderType invertOp(OrderType op)
+{
+    return op == LT ? GT : op == LE ? GE : op == GE ? LE : op == GT ? LT : op;
+}
+
+
+void XCSP3Callbacks::buildConstraintSum(string id, vector<XVariable*>& list, vector<int>& coefficients, XCondition& cond)
+{
+    assert(list.size() == coefficients.size());
+
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    int limit = 0;
+
+    if (cond.operandType == VARIABLE) {
+        cond.operandType = INTEGER;
+        Variable* var = mapping[cond.var];
+        if (!var)
+            throw runtime_error("Unknow value " + cond.var);
+        vars.push_back(var);
+        coefficients.push_back(-1);
+    } else
+        limit = cond.val;
+    
+    // Need order on coefficients
+    for (size_t i = 0; i < vars.size(); ++i) {
+        size_t pos = i;
+        for (size_t j = i + 1; j < vars.size(); ++j) {
+            if (coefficients[j] < coefficients[pos])
+                pos = j;
+        }
+        swap(coefficients[i], coefficients[pos]);
+        swap(vars[i], vars[pos]);
+    }
+
+    // If only -1 since sorted can do a standart sum
+    if (coefficients[0] == -1 && coefficients[coefficients.size() - 1] == -1) {
+        sum(id, vars, -limit, invertOp(cond.op));
+        return;
+    }
+
+
+    switch (cond.op) {
+    case LT:
+        limit--;
+    case LE:
+        vecCont.push_back(new ConstraintWeightedSumLE(id, vars, coefficients, limit));
+        break;
+    case GT:
+        limit++;
+    case GE:
+        vecCont.push_back(new ConstraintWeightedSumGE(id, vars, coefficients, limit));
+        break;
+    case EQ:
+        vecCont.push_back(new ConstraintWeightedSumEQ(id, vars, coefficients, limit));
+        break;
+    case NE:
+        vecCont.push_back(new ConstraintWeightedSumNE(id, vars, coefficients, limit));
+        break;
+    /* case IN:
+        vecCont.push_back(new ConstraintWeightedSumGE(id, vars, coefficients, cond.min));
+        for (size_t i = 0; i < coefficients.size(); i++)
+            coefficients[i] = -coefficients[i];
+        vecCont.push_back(new ConstraintWeightedSumGE(id, vars, coefficients, -cond.max));
+        break;
+    */
+    default:
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Operator not supported for sum");
+        break;
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintSum(string id, vector<XVariable*>& list, vector<XVariable*>& coefficients, XCondition& cond)
+{
+    assert(list.size() == coefficients.size());
+
+    vector<Variable*> vars;
+    vector<XVariable*> xVars(list.begin(), list.end());
+    xVars.insert(xVars.end(), coefficients.begin(), coefficients.end());
+    toMyVariables(xVars, vars);
+
+    bool allBool = true;
+    for (size_t i = 0; i < vars.size(); ++i)
+        if (vars[i]->domainInitSize != 2 || vars[i]->getLowerBoundVal() != 0 || vars[i]->getUpperBoundVal() != 1) {
+            allBool = false;
+            break;
+
+        }
+    
+    if (allBool) {
+        switch (cond.op) {
+        case LE:
+            if (cond.operandType == VARIABLE) {
+                Variable* var = mapping[cond.var];
+                if (!var)
+                    throw runtime_error("Unknow value " + cond.var);
+                vecCont.push_back(new SumScalarBooleanLEVar(id, vars, var));
+            } else 
+                vecCont.push_back(new SumScalarBooleanLE(id, vars, cond.val));
+            return;
+        case EQ:
+            vecCont.push_back(new SumScalarBooleanEQ(id, vars, cond.val));
+            return;
+        default:
+            break;
+        }
+    }
+
+    string tmp = "add(";
+    assert(list.size() == coefficients.size());
+    for (size_t i = 0; i < list.size(); i++) {
+        tmp = tmp + "mul(" + list[i]->id + "," + coefficients[i]->id + ")";
+        if (i < list.size() - 1)
+            tmp = tmp + ",";
+    }
+
+    if (cond.operandType == VARIABLE) {
+        cond.operandType == INTEGER;
+        cond.val = 0;
+        tmp = tmp + ",neg(" + cond.var + ")";
+    }
+
+    tmp = tmp + ")";
+
+    switch (cond.op) {
+    case LT:
+        tmp = "lt(" + tmp;
+        break;
+    case LE:
+        tmp = "le(" + tmp;
+        break;
+    case GT:
+        tmp = "gt(" + tmp;
+        break;
+    case GE:
+        tmp = "ge(" + tmp;
+        break;
+    case EQ:
+        tmp = "eq(" + tmp;
+        break;
+    case NE:
+        tmp = "ne(" + tmp;
+        break;
+    case IN:
+        // Intervals
+        buildConstraintIntension(id, new Tree("ge(" + tmp + "," + to_string(cond.min) + ")"));
+        buildConstraintIntension(id, new Tree("le(" + tmp + "," _ to_string(cond.max) + ")"));
+        return;
+    default:
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Operator not supported for weighted sum");
+        break;
+    }
+
+    tmp += "," + to_string(cond.val) + ")";
+    buildConstraintIntension(id, new Tree(tmp));
+}
+
+
