@@ -488,13 +488,13 @@ void XCSP3Callbacks::buildConstraintPrimitive(string id, OrderType op, XVariable
 {
     switch (op) {
     case LT:
-        vecCont.push_back(new ConstraintPrimitiveLeeThan(id, getMyVar(x), getMyVar(y), k));
+        vecCont.push_back(new ConstraintPrimitiveLessThan(id, getMyVar(x), getMyVar(y), k));
         break;
     case LE:
         vecCont.push_back(new ConstraintPrimitiveLessEqual(id, getMyVar(x), getMyVar(y), k));
         break;
     case GT:
-        vecCont.push_back(new ConstraintPrimitiveLeeThan(id, getMyVar(y), getMyVar(x), -k));
+        vecCont.push_back(new ConstraintPrimitiveLessThan(id, getMyVar(y), getMyVar(x), -k));
         break;
     case GE:
         vecCont.push_back(new ConstraintPrimitiveLessEqual(id, getMyVar(y), getMyVar(x), -k));
@@ -915,6 +915,344 @@ void XCSP3Callbacks::buildConstraintSum(string id, vector<XVariable*>& list, vec
 
     tmp += "," + to_string(cond.val) + ")";
     buildConstraintIntension(id, new Tree(tmp));
+}
+
+
+void XCSP3Callbacks::buildConstraintLex(string id, vector<vector<XVariable*>>& lists, OrderType order)
+{
+    bool isStrict = false;
+    bool invert = false;
+
+    switch (order) {
+    case GT:
+        invert = true;
+    case LT:
+        isStrict = true;
+        break;
+    case GE:
+        invert = true;
+    case LE:
+        break;
+    default:
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Operator not supported for lex");
+        break;
+    }
+
+    vector<Variable*> list1, list2;
+    for (size_t i = 0; i < lists.size() - 1; i++) {
+        toMyVariables(lists[i], list1);
+        toMyVariables(lists[i + 1], list2);
+
+        if (invert) 
+            vecCont.push_back(new ConstraintLexicographic(id, list2, list1, isStrict));
+        else
+            vecCont.push_back(new ConstraintLexicographic(id, list1, list2, isStrict));
+        list1.clear();
+        list2.clear();
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintLexMatrix(string id, vector<vector<XVariable*>>& matrix, OrderType order)
+{
+    buildConstraintLex(id, matrix, order);
+
+    vector<vector<XVariable*>> trans;
+    for (size_t i = 0; i < matrix[0].size(); ++i) {
+        vector<XVariable*> line;
+        for (size_t j = 0; j < matrix.size(); ++j)
+            line.push_back(matrix[j][i]);
+        trans.push_back(line);
+    }
+
+    buildConstraintLex(id, trans, order);
+}
+
+
+void XCSP3Callbacks::buildConstraintOrdered(string id, vector<XVariable*>& list, OrderType order)
+{
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    switch (order) {
+    case GT:
+        vecCont.push_back(new ConstraintOrderedGT(id, vars));
+        break;
+    case GE:
+        vecCont.push_back(new ConstraintOrderedGE(id, vars));
+        break;
+    case LT:
+        vecCont.push_back(new ConstraintOrderedLT(id, vars));
+        break;
+    case LE:
+        vecCont.push_back(new ConstraintOrderedLE(id, vars));
+        break;
+    default:
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Operator not supported for ordered");
+        break;
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintOrdered(string id, vector<XVariable*>& list, vector<int>& lenghts, OrderType order)
+{
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    for (size_t i = 0; i < vars.size() - 2; i++) {
+        int k = lenghts[i];
+        switch (order) {
+        case LT:
+            vecCont.push_back(new ConstraintPrimitiveLessThan(id, vars[i], vars[i + 1], k));
+            break;
+        case LE:
+            vecCont.push_back(new ConstraintPrimitiveLessEqual(id, vars[i], vars[i + 1], k));
+            break;
+        case GT:
+            vecCont.push_back(new ConstraintPrimitiveLessThan(id, vars[i + 1], vars[i], -k));
+            break;
+        case GE:
+            vecCont.push_back(new ConstraintPrimitiveLessEqual(id, vars[i + 1], vars[i], -k));
+            break;
+        default:
+            std::cout << "s UNSUPPORTED" << endl;
+            throw runtime_error("Operator not supported for ordered");
+            break;
+        }
+    }
+}
+
+
+
+void XCSP3Callbacks::buildConstraintMinimum(string id, vector<XVariable*>& list, XCondition& xc)
+{
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    if (xc.operandType == VARIABLE) {
+        if (xc.op == EQ) {
+            Variable* var = mapping[xc.var];
+            if (!var)
+                throw runtime_error("Unknow value " + xc.var);
+            vars.push_back(var);
+            vecCont.push_back(new ConstraintMinimum(id, vars, vars.size() - 1));
+        } else
+            buildConstraintIntension(id, new Tree(createExpression("min", xc.op, list, xc.var)));
+    } else if (xc.operandType == INTEGER) {
+        if (xc.op == LE || xc.op == LT || xc.op == GE || xc.op == GT) {
+            std::cout << "s UNSUPPORTED" << endl;
+            throw runtime_error("Operator not supported for minimum");
+        }
+        buildConstraintIntension(id, new Tree(createExpression("min", xc.op, list, to_string(xc.val))));
+    } else {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Operator not supported for minimum");
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintMaximum(string id, vector<XVariable*>& list, XCondition& xc)
+{
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    if (xc.operandType == VARIABLE) {
+        if (xc.op == EQ) {
+            Variable* var = mapping[xc.var];
+            if (!var)
+                throw runtime_error("Unknow value " + xc.var);
+            vars.push_back(var);
+            vecCont.push_back(new ConstraintMaximum(id, vars, vars.size() - 1));
+        } else
+            buildConstraintIntension(id, new Tree(createExpression("max", xc.op, list, xc.var)));
+    } else uf (xc.operandType == INTEGER) {
+        if (xc.op == LE || xc.op == LT || xc.op == GE || xc.op == GT) {
+            std::cout << "s UNSUPPORTED" << endl;
+            throw runtime_error("Operator not supported for maximum");
+        }
+        buildConstraintIntension(id, new Tree(createExpression("max", xc.op, list, to_string(xc.val))));
+    } else {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Operator not supported for maximum");
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintAmong(string id, vector<XVariable*>& list, vector<int>& values, int k)
+{
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    if ((int)vars.size() == k) {
+        for (auto var : vars) {
+            for (int i = 0; i < var->domainCurSize; ++i) {
+                int val = var->getVarPropFromLocalDomInd(i).val;
+                if (find(values.begin(), values.end(), val) != values.end())
+                    if (var->removeAt(i)) {
+                        std::cout << "s UNSATISFIABLE" << endl;
+                        throw runtime_error("UNSAT by default");
+                    }
+            }
+        }
+    } else if ((int)vars.size() >= k) {
+        std::cout << "s UNSATISFIABLE" << endl;
+        throw runtime_error("UNSAT by default");
+    } else
+        vecCont.push_back(new ConstraintAmong(id, vars, values, k));
+}
+
+
+void XCSP3Callbacks::buildConstraintAtLeast(string id, vector<XVariable*>& list, int value, int k)
+{
+    vector<Variable*> vars;
+    for (size_t i = 0; i < list.size(); ++i) {
+        Variable* v = mapping[list[i]->id];
+        if (!v)
+            throw runtime_error("Unknow value " + list[i]->id);
+        if (v->isValidValue(value)) {
+            if (v->isAssigned())
+                k--;
+            else
+                vars.push_back(v);
+        }
+    }
+
+    int sz = vars.size();
+    if (k <= 0)
+        return;
+    else if (k > sz) {
+        std::cout << "s UNSATISFIABLE" << endl;
+        throw runtime_error("UNSAT by default");
+    } else if (k == 1)
+        vecCont.push_back(new ConstraintAtLeast1(id, vars, value));
+    else if (k == sz)
+        for (auto v : vars)
+            v->assignTo(value);
+    else
+        vecCont.push_back(new ConstraintAtLeastK(id, vars, value, k));
+}
+
+
+void XCSP3Callbacks::buildConstraintAtMost(string id, vector<XVariable*>& list, int value, int k)
+{
+    vector<Variable*> vars;
+    for (size_t i = 0; i < list.size(); ++i) {
+        Variable* v = mapping[list[i]->id];
+        if (!v)
+            throw runtime_error("Unknow value " + list[i]->id);
+        if (v->isValidValue(value)) {
+            if (v->isAssigned())
+                k--;
+            else
+                vars.push_back(v);
+        }
+    }
+
+    int sz = vars.size();
+    if (k < 0 || k >= sz) {
+        std::cout << "s UNSATISFIABLE" << endl;
+        throw runtime_error("UNSAT by default");
+    } else if (k == 0) {
+        for (auto v : vars) 
+            if (v->removeValue(value)) {
+                std::cout << "s UNSATISFIABLE" << endl;
+                throw runtime_error("UNSAT by default");
+            }
+    } else if (k == 1) 
+        vecCont.push_back(new ConstraintAtMost1(id, vars, value));
+    else
+        vecCont.push_back(new ConstraintAtMostK(id, vars, value, k));
+}
+
+
+void buildConstraintExactlyVariable2(string id, vector<XVariable*>& list, int value , XCondition& xc)
+{
+    assert(xc.operandType == VARIABLE);
+
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    Variable* var = mapping[xc.var];
+    if (!var)
+        throw runtime_error("Unknow variable :" + xc.var);
+    vars.push_back(var);
+
+    vecCont.push_back(new ConstraintExactlyKVariable(id, vars, value));
+}
+
+
+void XCSP3Callbacks::buildConstraintCount(string id, vector<XVariable*>& list, vector<int>& values, XCondition& xc)
+{
+    if (xc.operandType == VARIABLE) {
+        if (values.size() == 1 && xc.op == EQ)
+            buildConstraintExactlyVariable2(id, list, values[0], xc);
+        else {
+            std::cout << "s UNSUPPORTED" << endl;
+            throw runtime_error("Case not supported for Count");
+        }
+    } else if (xc.operandType == INTEGER) {
+        if (values.size() == 1) {
+            if (xc.op == GE)
+                buildConstraintAtLeast(id, list, values[0], xc.val);
+            else if (xc.op == GT)
+                buildConstraintAtLeast(id, list, values[0], xc.val + 1);
+            else if (xc.op == LT)
+                buildConstraintAtMost(id, list, values[0], xc.val - 1);
+            else if (xc.op == LE)
+                buildConstraintAtMost(id, list, values[0], xc.val);
+            else if (xc.op == EQ)
+                buildConstraintExactlyK(id, list, values[0], xc.val)
+            else {
+                std::cout << "s UNSUPPORTED" << endl;
+                throw runtime_error("Case not supported for Count");
+            }
+        } else if (xc.op == EQ)
+            buildConstraintAmong(id, list, values, xc.val);
+        else {
+            std::cout << "s UNSUPPORTED" << endl;
+            throw runtime_error("Case not supported for Count");
+        }
+    } else {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Operator not supported for Count");
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintExactlyK(string id, vector<XVariable*>& list, int value, int k)
+{
+    vector<Variable*> vars;
+    for (size_t i = 0; i < list.size(); ++i) {
+        Variable* v = mapping[list[i]->id];
+        if (!v)
+            throw runtime_error("Unknow value " + list[i]->id);
+        if (v->isValidValue(value)) {
+            if (v->isAssigned())
+                k--;
+            else
+                vars.push_back(v);
+        }
+    }
+
+    int sz = vars.size();
+    if (k < 0 || k > sz) {
+        std::cout << "s UNSATISFIABLE" << endl;
+        throw runtime_error("UNSAT by default");
+    } else if (k == 0) {
+        for (auto v : vars) 
+            if (v->removeValue(vale)) {
+                std::cout << "s UNSATISFIABLE" << endl;
+                throw runtime_error("UNSAT by default");
+            }
+    } else if (k == 1) 
+        vecCont.push_back(new ConstraintExactly1(id, vars, value));
+    else if (k == sz)
+        for (auto v : vars)
+            v->assignTo(value);
+    else
+        vecCont.push_back(new ConstraintExactlyK(id, vars, value, k));
 }
 
 
