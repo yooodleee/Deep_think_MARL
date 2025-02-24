@@ -239,6 +239,193 @@ public:
 
 
     // CUMULATIVE
-    vir
+    virtual void buildConstraintCumulative(string id, vector<XVariable*>& origins, vector<int>& lenghts, vector<int>& heights, vector<XVariable*>& ends, XCondition& xc)
+    {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Unsupported");
+    }
+    virtual void buildConstraintCumulative(string id, vector<XVariable*>& origins, vector<int>& lenghts, vector<int>& heights, XCondition& xc)
+    {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Unsupported");
+    }
+    virtual void buildConstraintCumulative(string id, vector<XVariable*>& origins, vector<int>& lengths, vector<XVariable*>& varHeights, vector<XVariable*>& ends, XCondition& xc)
+    {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Unsupported");
+    }
+    virtual void buildConstraintCumulative(string id, vector<XVariable*>& origins, vector<int>& lenghts, vector<XVariable*>& varHeights, XCondition& xc)
+    {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Unsupported");
+    }
+    virtual void buildConstraintCumulative(string id, vector<XVariable*>& origins, vector<XVariable*>& lengths, vector<int>& heights, vector<XVariable*>& ends, XCondition& xc)
+    {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Unsupported");
+    }
+    virtual void buildConstraintCumulative(string id, vector<XVariable*>& origins, vector<XVariable*>& lengths, vector<int>& heights, XCondition& xc)
+    {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Unsupported");
+    }
+    virtual void buildConstraintCumulative(string id, vector<XVariable*>& origins, vector<XVariable*>& lenghts, vector<XVariable*> heights, vector<XVariable*> ends, XCondition& xc)
+    {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Unsupported");
+    }
+    virtual void buildConstraintCumulative(string id, vector<XVariable*>& lengths, vector<XVariable*>& heights, XCondition& xc)
+    {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Unsupported");
+    }
+};
 }
+
+
+using namespace XCSP3Core;
+
+int typeCSP;
+
+vector<Constraint*> vecCont;
+vector<Constraint*> vecBtConst;
+Problem* problem;
+
+std::map<string, Variable*> mapping;
+
+
+void toMyVariables(vector<XVariable*>& src, vector<Variable*>& dest)
+{
+    for (size_t i = 0, stop = src.size(); i < stop; ++i) {
+        if (!mapping[src[i]->id])
+            throw runtime_error("Unknow value " + src[i]->id);
+        dest.push_back(mapping[src[i]->id]);
+    }
 }
+
+
+string createExpression(string minmax, OrderType op, vector<XVariable*>& list, string value)
+{
+    string expr;
+
+    switch (op) {
+    case LT:
+        expr = "lt";
+        break;
+    case LE:
+        expr = "le";
+        break;
+    case GT:
+        expr = "gt";
+        break;
+    case GE:   
+        expr = "ge";
+        break;
+    case EQ:
+        expr = "eq";
+        break;
+    case NE:
+        expr = "ne";
+        break;
+    default:
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("not yet supported");
+        break;
+    }
+
+    expr += "(" + value + "," + minmax + "(";
+    for (size_t i = 0, stop = list.size(); i < stop; i++)
+        expr += (i != 0 ? "," : "") + list[i]->id;
+    expr += "))";
+    
+    return expr;
+}
+
+
+void XCSP3Callbacks::beginInstance(InstanceType type)
+{
+    if (type == COP) {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("COP instances unsupported");
+    }
+
+    typeCSP = type;
+    problem = new Problem();
+}
+
+
+void XCSP3Callbacks::buildVariableInteger(string id, int minValue, int maxValue)
+{
+    mapping[id] = (minValue == maxValue) ? new Variable(id, maxValue) : new Variable(id, minValue, maxValue);
+    problem->addVariable(mapping[id]);
+}
+
+
+void XCSP3Callbacks::buildVariableInteger(string id, vector<int>& values)
+{
+    if (values.size() == 1)
+        mapping[id] = new Variable(id, values[0]);
+    else
+        mapping[id] = new Variable(id, values);
+    problem->addVariable(mapping[id]);
+}
+
+
+vector<int> lastTuples;
+vector<vector<int>> lastTuplesN;
+bool lastExtUnary;
+
+
+void createExt(string id, vector<XVariable*>& list, vector<vector<int>>& tuples, bool support)
+{
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    vector<vector<ind>> t(tuples.size());
+    for (size_t i = 0; i < tuples.size(); ++i) {
+        vector<ind> tmp;
+        for (size_t j = 0; j < tuples.size(); ++j)
+            tmp.push_back((tuples[i][j] == STAR ? STAR : vars[i]->getVarPropIndFromValue(tuples[i][j])));
+        t[i] = tmp;
+    }
+
+    if (list.size() == 2) {
+        vecCont.push_back(new ConstraintExtBinary(id, vars, t, support));
+    } else {
+        Constraint* newCont = (support ? static_cast<Constraint*>(new ConstraintExtN(id, vars, t)) : static_cast<Constraint*>(new ConstraintExtNConflict(id, vars, t)));
+        vecCont.push_back(newCont);
+        vecBtConst.push_back(newCont);
+    }
+}
+
+
+Variable* getMyVar(XVariable* x)
+{
+    Variable* var = mapping[x->id];
+    if (!var)
+        throw runtime_error("Unknow variable :" + x->id);
+    return var;
+}
+
+
+void XCSP3Callbacks::buildConstraintExtension(string id, vector<XVariable*> list, vector<vector<int>>& tuples, bool support, bool hasStar)
+{
+    lastTuplesN = tuples;
+    lastExtUnary = false;
+
+    if (hasStar && !support) {
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Extension conflict constraint with star is not yet supported");
+    }
+
+    if (!support && !lastTuplesH.size())
+        return;
+    if (support && !lastTuplesN.size()) {
+        std::cout << "s UNSATISFIABLE" << endl;
+        throw runtime_error("UNSAT by default");
+    }
+
+    createExt(id, list, lastTuplesN, support);
+}
+
+
