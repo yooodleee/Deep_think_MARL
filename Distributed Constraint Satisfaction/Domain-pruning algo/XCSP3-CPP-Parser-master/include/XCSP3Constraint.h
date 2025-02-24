@@ -226,5 +226,263 @@ namespace XCSP3Core {
     };
 
 
-    
+    class XConstraintAllDiffMatrix : public XConstraint {
+    public:
+        vector<vector<XVariable*>> matrix;
+
+        XConstraintAllDiffMatrix(std::string idd, std::string c) : XConstraint(idd, c) {}
+
+        XConstraintAllDiffMatrix(std::string idd, std::string c, vector<vector<XVariable*>>& mat) : XConstraint(idd, c) {
+            matrix.resize(mat.size());
+            for (unsigned int i = 0; i < max.size(); i++)
+                matrix[i].assign(mat[i].begin(), mat[i].end());
+        }
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+    typedef XConstraintAllDiffMatrix XConstraintAllDiffList;
+    typedef XConstraint XConstraintAllEqual;
+
+
+    /****************************************************************
+     * constraint ordered and lex
+     ***************************************************************/
+
+    static OrderType _op;
+
+
+    class XConstraintOrdered : public XConstraint, public XLength {
+    public:
+        OrderType& op;
+
+        XConstraintOrdered(std::string idd, std::string c) : XConstraint(idd, c), op(_op) {}
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+
+    class XConstraintLex : public XConstraintOrdered {
+    public:
+        // list is cleared and lists are stored in lists
+        vector<vector<XVariable*>> lists;
+
+        XConstraintLex(std::string idd, std::string c) : XConstraintOrdered(idd, c) {}
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+
+    class XConstraintLexMatrix : public XConstraintOrdered {
+    public:
+        vector<vector<XVariable*>> matrix;
+
+        XConstraintLexMatrix(std::string idd, std::string c) : XConstraintOrdered(idd, c) {}
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;    
+    };
+
+
+    /****************************************************************
+     ****************************************************************
+     *              SUMMING and COUNTING CONSTRAINTS                *
+     ****************************************************************
+     ***************************************************************/
+
+
+    /****************************************************************
+     * constraint sum
+     ***************************************************************/
+
+    // static vector<int> _coeffs;
+    class XConstraintSum : public XConstraint, public XInitialCondition, public XValues {
+    public:
+        // vector<int>& coeffs;
+
+        XConstraintSum(std::string idd, std::string c) : XConstraint(idd, c) {}
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+
+    class XConstraintNValues : public XConstraint, public XInitialCondition {
+    public:
+        vector<int>& except;
+
+        XConstraintNValues(std::string idd, std::string c) : XConstraint(idd, c), except(_except) {}
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+
+    class XConstraintCardinality : public XConstraint, public XValues {
+    public:
+        vector<XVariable*> occurs;
+        bool closed;
+
+        XConstraintCardinality(std::string idd, std::string c) : XConstraint(idd, c) {}
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+
+    /****************************************************************
+     * constraint count
+     ***************************************************************/
+
+    class XConstraintCount : public XConstraint, public XInitialCondition, public XValues {
+    public:
+        XConstraintCount(std::string idd, std::string c) : XConstraint(idd, c) {}
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+
+    /****************************************************************
+     ****************************************************************
+     *                  CONNECTION CONSTRAINTS                      *
+     ****************************************************************
+     ***************************************************************/
+
+
+    /****************************************************************
+     * constraint minimum and maximum
+     * startIndex and rank are useful if index != NULL
+     * in such a case condition is optional (=="")
+     ***************************************************************/
+
+    class XConstraintMaximum : public XConstraint, public XInitialCondition, public XIndex {
+    public:
+        int startIndex;
+        RankType rank;
+
+        XConstraintMaximum(std::string idd, std::string c) : XConstraint(idd, c), startIndex(0), rank(ANY) {}
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+
+    typedef XConstraintMaximum XConstraintMinimum;
+
+    /****************************************************************
+     * constraint element
+     ***************************************************************/
+
+    class XConstraintElement : public XConstraint, public XIndex, public XValue {
+    public:
+        int startIndex;
+        RankType rank;
+
+        XConstraintElement(std::string idd, std::string c) : XConstraint(idd, c), startIndex(0), rank(ANY) {}
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+
+    /****************************************************************
+     * constraint channel
+     ***************************************************************/
+
+    class XConstraintChannel : public XConstraint, public XValue {
+    public:
+        vector<XVariable*> secondList;
+        int startIndex1;
+        int startIndex2;
+
+        XConstraintChannel(std::string idd, std::string c) : XConstraint(idd, c), startIndex1(0), startIndex2(0) {}
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+
+    /****************************************************************
+     ****************************************************************
+     *              PACKING AND SCHEDULING CONSTRAINTS              *
+     ****************************************************************
+     ***************************************************************/
+
+
+    /****************************************************************
+     * constraint noOverlap
+     ***************************************************************/
+
+    class XConstraintNoOverlap : public XConstraint, public XLength {
+    public:
+        // Be careful origins is the vector list!!!
+        vector<XVariable*>& origins;
+        bool zeroIgnored;
+
+        XConstraintNoOverlap(std::string idd, std::string c) : XConstraint(idd, c), origins(list) {}
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+
+    /****************************************************************
+     * constraint Cumulative
+     ***************************************************************/
+
+    class XConstraintCumulative : public XConstraint, public XLength, public XInitialCondition {
+    public:
+        // Be carefull origin is the vector list!!!
+        vector<XVariable*>& origins;
+        vector<XVariable*> ends;
+        vector<XVariable*> heights;
+
+        XConstraintCumulative(std::string idd, std::string c) : XConstraint(idd, c), origins(list) {}
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+
+    /****************************************************************
+     * constraint stretch
+     ***************************************************************/
+
+    class XConstraintStretch : public XConstraint {
+    public:
+        vector<int> values; // only integers
+        vector<XInterval> widths;   // interval
+        vector<vector<int>> patterns;
+
+        XConstraintStretch(std::string idd, std::string c) : XConstraint(idd, c) {}
+
+
+        // Group is valid with lists only.
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
+
+    /****************************************************************
+     * constraint instantiation
+     ***************************************************************/
+
+    static vector<int> _values;
+
+    class XConstraintInstantiation : public XConstraint {
+    public:
+        vector<int>& values;
+
+        XConstraintInstantiation(std::string idd, std::string c) : XConstraint(idd, c), values(_values) {}
+    };
+
+
+    /****************************************************************
+     ****************************************************************
+     *              COMPARISON BASED CONSTRAINTS                    *
+     ****************************************************************
+     ***************************************************************/
+
+    class XConstraintCircuit : public XConstraint, public XValue {  // value => size
+    public:
+        XConstraintCircuit(std::string idd, std::string c) : XConstraint(idd, c) {}
+        int startIndex;
+
+        void unfoldParameters(XConstraintGroup* group, vector<XVariable*>& arguments, XConstraint* original) override;
+    };
+
 }
+
+
+
+
+#endif  // XCONSTRAINT_H_
