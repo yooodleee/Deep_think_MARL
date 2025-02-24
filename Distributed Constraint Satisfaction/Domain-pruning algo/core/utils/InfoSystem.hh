@@ -68,7 +68,7 @@ public:
     /// Return the time elapsed since last call
     static inline double elapsed_seconds()
     {
-        double oldTime = totalTime();
+        double oldTime = totalTime;
         totalTime = timeElapsed();
         return totalTime - oldTime;
     }
