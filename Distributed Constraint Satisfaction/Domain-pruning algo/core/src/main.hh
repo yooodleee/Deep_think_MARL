@@ -429,3 +429,182 @@ void XCSP3Callbacks::buildConstraintExtension(string id, vector<XVariable*> list
 }
 
 
+
+void XCSP3Callbacks::buildConstraintExtension(string id, XVariable* variable, vector<int>& tuples, bool support, bool hasStar)
+{
+    lastTuples = tuples;
+    lastExtUnary = true;
+
+    if (hasStar) {
+        if (support) {
+            std::cout << "s UNSATISFIABLE" << endl;
+            throw runtime_error("UNSAT by default");
+        }
+
+        return;
+    }
+
+    vecCont.push_back(new ConstraintExtUnary(id, getMyVar(variable, lastTuples, support)));
+}
+
+
+void XCSP3Callbacks::buildConstraintExtensionAs(string id, vector<XVariable*> list, bool support, bool hasStar)
+{
+    if (lastExtUnary) {
+        assert(list.size() == 1);
+        vecCont.push_back(new ConstraintExtUnary(id, getMyVar(list[0]), lastTuples, support));
+    } else {
+        if (!support && !lastTuplesN.size())
+            return;
+        createExt(id, list, lastTuplesN, support);
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintIntension(string id, string expr)
+{
+    Tree* tree = new Tree(expr);
+    buildConstraintIntension(id, tree);
+}
+
+
+void XCSP3Callbacks::buildConstraintIntension(string id, Tree* tree)
+{
+    std::vector<Variable*> scope;
+    for (auto var_str : tree->listOfVariables) {
+        Variable* var = mapping[var_str];
+        if (!var) 
+            throw runtime_error("Unknow value " + var_str);
+        scope.push_back(var);
+    }
+
+    Constraint* newCont = static_cast<Constraint*>(new Constraint(id, scope, tree));
+    vecCont.push_back(newCont);
+}
+
+
+// Recognize constraint with the form x +- k op y (op \in {eq, le, lt, ge, gt, ne}.
+void XCSP3Callbacks::buildConstraintPrimitive(string id, OrderType op, XVariable* x, int k, XVariable* y)
+{
+    switch (op) {
+    case LT:
+        vecCont.push_back(new ConstraintPrimitiveLeeThan(id, getMyVar(x), getMyVar(y), k));
+        break;
+    case LE:
+        vecCont.push_back(new ConstraintPrimitiveLessEqual(id, getMyVar(x), getMyVar(y), k));
+        break;
+    case GT:
+        vecCont.push_back(new ConstraintPrimitiveLeeThan(id, getMyVar(y), getMyVar(x), -k));
+        break;
+    case GE:
+        vecCont.push_back(new ConstraintPrimitiveLessEqual(id, getMyVar(y), getMyVar(x), -k));
+        break;
+    case EQ:
+        vecCont.push_back(new ConstraintPrimitiveEqual(id, getMyVar(x), getMyVar(y), k));
+        break;
+    case NE:
+        vecCont.push_back(new ConstraintPrimitiveNotEqual(id, getMyVar(x), getMyVar(y), k));
+        break;
+    default:
+        std::cout << "s UNSUPPORTED" << endl;
+        throw runtime_error("Primitive not supported");
+        break;
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintPrimitive(string id, OrderType op, XVariable* x, int k)
+{
+    assert(op == LE || op == GE);
+    Variable* var = getMyVar(x);
+
+    if (op == LE && var->removeValuesAbove(k, 0)) {
+        std::cout << "s UNSATISFIABLE" << endl;
+        throw runtime_error("Domain wipeout of " + x->id + " during parsing");
+    } else if (op == GE && var->removeValuesUnder(k, 0)) {
+        std::cout << "s UNSATISFIABLE" << endl;
+        throw runtime_error("Domain wipeout of " + x->id + " during parsing");
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintPrimitive(string id, XVariable* x, bool in, int min, int max)
+{
+    // x=>min and x<=max, x in/notin k
+    Variable* var = getMyVar(x);
+
+    if (in) {
+        if (min == max)
+            var->assignTo(min, 0);
+        else {
+            if (var->removeValuesAbove(max, 0)) {
+                std::cout << "s UNSATISFIABLE" << endl;
+                throw runtime_error("Domain wipeout of " + x->id + " during parsing");
+            }
+            if (var->removeValuesUnder(min, 0)) {
+                std::cout << "s UNSATISFIABLE" << endl;
+                throw runtime_error("Domain wipeout of " + x->id + " during parsing");
+            }
+        }
+    } else if (min == max) {
+        if (var->removeValues(min, 0)) {
+            std::cout << "s UNSATISFIABLE" << endl;
+            throw runtime_error("Domain wipeout of " + x->id + " during parsing");
+        }
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintAllEqual(string id, vector<XVariable*>& list)
+{
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    ConstraintAllEqual* newCont = new ConstraintAllEqual(id, vars);
+
+    vecCont.push_back(newCont);
+    vecBtConst.push_back(newCont);
+}
+
+
+void XCSP3Callbacks::buildConstraintNotAllEqual(string id, vector<XVariable*>& list)
+{
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    vecCont.push_back(new ConstraintNotAllEqual(id, vars));
+}
+
+
+void XCSP3Callbacks::buildConstraintAlldifferent(string id, vector<Tree*>& list)
+{
+    for (size_t i = 0; i < list.size() - 1; i++) {
+        for (size_t j = i + 1; j < list.size(); j++) {
+            NodeNE* n = new NodeNE();
+            n->addParameter(list[i]->root);
+            n->addParameter(list[j]->root);
+            Tree* tmp = new Tree(n);
+
+            // Problem with scope
+            for (string s : list[i]->listOfVariables)
+                tmp->listOfVariables.push_back(s);
+            for (string s : list[j]->listOfVariables)
+                if (std::find(tmp->listOfVariables.begin(), tmp->listOfVariables.end(), s) == tmp->listOfVariables.end())
+                    tmp->listOfVariables.push_back(s);
+            buildConstraintIntension(id, tmp);
+        }
+    }
+}
+
+
+void XCSP3Callbacks::buildConstraintAlldifferent(string id, vector<XVariable*>& list)
+{
+    vector<Variable*> vars;
+    toMyVariables(list, vars);
+
+    for (size_t i = 0; i < vars.size() - 1; ++i)
+        for (size_t j = i + 1; j < vars.size(); ++j)
+            vecCont.push_back(new ConstraintPrimitiveNotEqual(id, vars[i], vars[j], 0));
+}
+
+
