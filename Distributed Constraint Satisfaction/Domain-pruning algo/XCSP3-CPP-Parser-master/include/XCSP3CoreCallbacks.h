@@ -450,7 +450,80 @@ namespace XCSP3Core {
 
 
         /**
+         * If #recognizeSpecialIntensionCases is enabled (this is the case by default)
+         * intensional constraint of the form : x in/notin [min max] are recognized
+         * If such a intensional constraint is recognized, a callback to this function is done and not to #buildConstraintIntension
          * 
+         * @param id the id (name) of the constraint
+         * @param x the variable
+         * @param in true if x is in this interval
+         * @param min the constraint
+         * @param max the constraint
          */
+        virtual void buildConstraintPrimitive(string id, XVariable* x, bool in, int min, int max) {
+            throw runtime_error(
+                "primitive constraint x in/notin [min, max] is not yet supported. "
+                "You can use classical intension constraint by assigning recognizeSpecialIntensionCases to false "
+            );
+        }
+
+
+
+        // ##########################################################
+        // Language Constraints
+        // ##########################################################
+
+
+        /**
+         * The callback function related to a regular constraint. 
+         * See http://xcsp.org/specifications/regular
+         * 
+         * Example: 
+         * <regular> 
+         *  <list> x1 x2 x3 x4 x5 x6 x7 </list> 
+         *  <transitions>
+         *      (a,0,a)(a,1,b)(b,1,c)(c,0,d)(d,0,d)(d,1,e)(e,0,e)
+         *  </transitions> 
+         *  <start> a </start> 
+         *  <final> e </final> 
+         * </regular> 
+         * 
+         * XTransition is an obj with 3 fields: from (string), val(int) and to(string)
+         * Then, in the first transition of the example from=a, to=a and val=0
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param start the starting node
+         * @param final the set of final nodes
+         * @param transitions the set of transitions
+         */
+        virtual void buildConstraintRegular(string id, vector<XVariable*>& list, string start, vector<string>& final, vector<XTransition>& transitions) {
+            throw runtime_error("regular constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a MDD constraint. 
+         * See http://xcsp.org/specifications/mdd
+         * 
+         * Example: 
+         * <mdd> 
+         *  <list> x1 x2 x3 </list> 
+         *  <transitions> 
+         *      (r,0,n1)(r,1,n2)(r,2,n3)
+         *      (n1,2,n4)(n2,2,n4)(n3,0,n5)
+         *      (n4,0,t)(n5,0,t)
+         *  </transitions>
+         * </mdd> 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param transitions the set of transitions
+         */
+        virtual void buildConstraintMDD(string id, vector<XVariable*>& list, vector<XTransition>& transitions) {
+            throw runtime_error("MDD constraint is not yet supported");
+        }
+
+        // 527
     }
 }
