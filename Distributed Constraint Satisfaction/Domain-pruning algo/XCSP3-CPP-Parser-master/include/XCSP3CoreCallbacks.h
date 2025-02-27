@@ -1043,5 +1043,120 @@ namespace XCSP3Core {
 
 
         /**
+         * The callback function related to a nValues constraint with exception
+         * See http://xcsp.org/specifications/nValues
          * 
+         * 
+         * Example: 
+         * <nValues id="c3"> 
+         *      <list> z1 z2 z3 z4 </list> 
+         *      <condition> (eq,2) </condition> 
+         * </nValues> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param xc the condition (see #XCondition)
          */
+        virtual void buildConstraintNValues(string id, vector<XVariable*>& list, XCondition& xc) {
+            throw runtime_error("NValues constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a cardinality constraint with int values and int occurs
+         * See http://xcsp.org/specifications/cardinality
+         * 
+         * 
+         * Example: 
+         * <cardinality> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <values> 2 5 10 </values> 
+         *      <occurs> 1 2 3 </occurs> 
+         * </cardinality> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param values the set of values (here int)
+         * @param occurs the num of occurences (here int)
+         * @param clised is the constraint is closed
+         */
+        virtual void buildConstraintCardinality(string id, vector<XVariable*>& list, vector<int> values, vector<int>& occurs, bool closed) {
+            throw runtime_error("cardinality with int values and int occurs constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a cardinality constraint with int values and variable occurs
+         * See http://xcsp.org/specifications/cardinality
+         * 
+         * 
+         * Exaple:
+         * <cardinality> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <values> 0 1 2 3 </values>
+         *      <occurs> z0 z1 z2 z3 </occurs>
+         * </cardinality> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param values the set of values (here int)
+         * @param occurs the num of occurences (here variables)
+         * @param closed is the constraint is closed
+         */
+        virtual void buildConstraintCardinality(string id, vector<XVariable*>& list, vector<int> values, vector<XVariable*>& occurs, bool closed) {
+            throw runtime_error("cardinality with int values and int occurs constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a cardinality constraint with int values and interval occurs
+         * See http://xcsp.org/specifications/cardinality
+         * 
+         * 
+         * Example: 
+         * <cardinality> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <values> 2 5 10 </values> 
+         *      <occurs> 0..1 1..3 2..3 </occurs> 
+         * </cardinality> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param values the set of values (here int)
+         * @param occurs the num of occurences (here intervals)
+         * @param closed is the constraint is closed
+         */
+        virtual void buildConstraintCardinality(string id, vector<XVariable*>& list, vector<int> values, vector<XInterval>& occurs, bool closed) {
+            throw runtime_error("cardinality with int values and int occurs constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a cardinality constraint with variable values and int occurs
+         * See http://xcsp.org/specifications/cardinality
+         * 
+         * 
+         * Example: 
+         * <cardinality> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <values> z1 z2 z3 </values> 
+         *      <occurs> 1 2 3 </occurs> 
+         * </cardinality> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the list of the constraint (not the scope...)
+         * @param values the set of values (here variable)
+         * @param occurs the num of occurences (here int)
+         * @param closed is the constraint is closed
+         */
+        virtual void buildConstraintCardinality(string id, vector<XVariable*>& list, vector<XVariable*> values, vector<int>& occurs, bool closed) {
+            throw runtime_error("cardinality with int values and int occurs constraint is not yet supported");
+        }
+
+
+        // 1149
