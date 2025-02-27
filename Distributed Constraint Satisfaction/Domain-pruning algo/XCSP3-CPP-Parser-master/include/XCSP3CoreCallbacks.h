@@ -1159,4 +1159,423 @@ namespace XCSP3Core {
         }
 
 
-        // 1149
+        /**
+         * The callback function related to a cardinality constraint with variable values and variable occurs
+         * See http://xcsp.org/specifications/cardinality
+         * 
+         * 
+         * Example: 
+         * <cardinality> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <values> z1 z2 z3 </values> 
+         *      <occurs> y1 y2 y3 </occurs> 
+         * </cardinality> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the list of the constraint (not the scope)
+         * @param values the set of values (here variable)
+         * @param occurs the num of occurences (here variables)
+         * @param closed is the constraint is closed
+         */
+        virtual void buildConstraintCardinality(string id, vector<XVariable*>& list, vector<XVariable*> values, vector<XVariable*>& occurs, bool closed) {
+            throw runtime_error("cardinality with int values and int occurs constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a cardinality constraint with variable values and interval occurs
+         * See http://xcsp.org/specifications/cardinality
+         * 
+         * 
+         * Example: 
+         * <cardinality> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <values> z1 z2 z3 </values> 
+         *      <occurs> 1..2 3..5 2..4 </occurs> 
+         * </cardinality> 
+         * 
+         * 
+         * @param id the id (name) or the constraint
+         * @param list the list of the constraint (not the scope)
+         * @param values the set of values (here variable)
+         * @param occurs the num of occurences (here intervals)
+         * @param closed is the constraint is closed
+         */
+        virtual void buildConstraintCardinality(string id, vector<XVariable*>& list, vector<XVariable*> values, vector<XInterval>& occurs, bool closed) {
+            throw runtime_error("cardinality with int values and int occurs constraint is not yet supported");
+        }
+
+
+        
+        // ##########################################################
+        // Connection Constraints
+        // ##########################################################
+
+
+        /**
+         * The callback function related to a minimum constraint
+         * See http://xcsp.org/specifications/minimum
+         * 
+         * 
+         * Example: 
+         * <minimum> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <condition> (eq,y) </condition> 
+         * </minimum> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param xc the condition (see #XCondition)
+         */
+        virtual void buildConstraintMinimum(string id, vector<XVariable*>& list, XCondition& xc) {
+            throw runtime_error("minimum constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a minimum constraint (arg_min)
+         * See http://xcsp.org/specifications/minimum
+         * 
+         * 
+         * Example: 
+         * <minimum> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <index rank="any"> z1 </index> 
+         *      <condition> (eq,3) </condition> 
+         * </minimum> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param index the index variable
+         * @param startIndex 0 or something else ?
+         * @param rank ANY, ALL... 
+         * @param xc the condition (see #XCondition)
+         */
+        virtual void buildConstraintMinimum(string id, vector<XVariable*>& list, XVariable* index, int startIndex, RankType rank, XCondition& xc) {
+            throw runtime_error("minimum with index constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a maximum constraint
+         * See http://xcsp.org/specifications/maximum
+         * 
+         * 
+         * Example: 
+         * <maximum> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <condition> (ge,2) </condition> 
+         * </maximum>
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param xc the condition (see @XCondition)
+         */
+        virtual void buildConstraintMaximum(string id, vector<XVariable*>& list, XCondition& xc) {
+            throw runtime_error("maximum constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a maximum constraint (arg_max)
+         * See http://xcsp.org/specifications/maximum
+         * 
+         * 
+         * Example: 
+         * <maximum> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <index rank="any"> z1 </index> 
+         *      <condition> (eq,3) </condition> 
+         * </maximum> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param index the index variable
+         * @param startIndex 0 or something else ?
+         * @param rank ANY, ALL... 
+         * @param xc the condition (see #XCondition)
+         */
+        virtual void buildConstraintMaximum(string id, vector<XVariable*>& list, XVariable* index, int startIndex, RankType rank, XCondition& xc) {
+            throw runtime_error("maximum with index constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a element constraint with int value
+         * See http://xcsp.org/specifications/element
+         * 
+         * 
+         * Example: 
+         * <element> 
+         *      <list> y[] </list> 
+         *      <value> 2 </value> 
+         * </element> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param value the value (here an int)
+         */
+        virtual void buildConstraintElement(string id, vector<XVariable*>& list, int value) {
+            throw runtime_error("Element value constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a element constraint with variable value
+         * See http://xcsp.org/specifications/element
+         * 
+         * 
+         * Example: 
+         * <element> 
+         *      <list> y[] </list> 
+         *      <value> z </value> 
+         * </element> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param value the value (here a variable)
+         */
+        virtual void buildConstraintElement(string id, vector<XVariable*>& list, XVariable& value) {
+            throw runtime_error("Element variable constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a element constraint with variable index and int value
+         * See http://xcsp.org/specifications/element
+         * 
+         * 
+         * Example: 
+         * <element> 
+         *      <list> y[] </list> 
+         *      <index> i </index> 
+         *      <value> 2 </value> 
+         * </element> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the list of the constraint (not necessary the scope)
+         * @param index the index variable
+         * @param startIndex 0 or something else ?
+         * @param rank ANY, ALL... 
+         * @param value the value (here an int)
+         */
+        virtual void buildConstraintElement(string id, vector<XVariable*>& list, int startIndex, XVariable* index, RankType rank, int value) {
+            throw runtime_error("Element value with index constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a element constraint with variable index and variable value
+         * See http://xcsp.org/specifications/element
+         * 
+         * 
+         * Example: 
+         * <element> 
+         *      <list> y[] </list> 
+         *      <index> i < /index> 
+         *      <value> z </value> 
+         * </element> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the list of the constraint (not necessary the scope)
+         * @param index the index variable
+         * @param startIndex 0 or something else ?
+         * @param rank ANY, ALL... 
+         * @param value the value (here a variable)
+         */
+        virtual void buildConstraintElement(string id, vector,XVariable*>& list, int startIndex, XVariable* index, RankType rank, XVariable* value) {
+            throw runtime_error("Element variable with index constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a element constraint with int list variable index and variable value
+         * See http://xcsp.org/specifications/element
+         * 
+         * 
+         * Example: 
+         * <element> 
+         *      <list> 1 2 3 4 </list> 
+         *      <index> i </index> 
+         *      <value> z </value> 
+         * </element> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the list of the int
+         * @param index rank ANY, ALL... 
+         * @param value the value (here a variable)
+         */
+        virtual void buildConstraintElement(string id, vector<int>& list, int startIndex, XVariable* index, RankType rank, XVariable* value) {
+            throw runtime_error("Element value (with list of integers) with index constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a channel constraint
+         * See http://xcsp.org/specifications/channel
+         * 
+         * 
+         * Example: 
+         * <channel> 
+         *      <list> z1 z2 z3 z4 </list> 
+         * </channel> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         */
+        virtual void buildConstraintChannel(string id, vector<XVariable*>& list, int startIndex) {
+            throw runtime_error("channel with 1 list constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a channel constraint
+         * See http://xcsp.org/specifications/channel
+         * 
+         * 
+         * Example: 
+         * <channel> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <list> y1 y2 y3 y4 </list> 
+         * </channel> 
+         * 
+         * 
+         * The size of the array {@code list1} must be less than or equal to the size of {@code list2}. 
+         * 
+         * 
+         * If list1.size() == list2.size() then list1[i] = j <=> list2[j] = i
+         * If list1.size() <  list2.size() then list1[i] = j  => list2[j] = i
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list1 the first list
+         * @param startIndex1 the starting index for list1
+         * @param list2 the second list
+         * @param startIndex2 the starting index for list2
+         * 
+         */
+        virtual void buildConstraintChannel(string id, vector<XVariable*>& list1, int startIndex1, vector<XVariable*>& list2, int startIndex2) {
+            throw runtime_error("channel with 2 lists constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a channel constraint with a value
+         * See http://xcsp.org/specifications/channel
+         * 
+         * 
+         * Example: 
+         * <channel> 
+         *      <list> z1 z2 z3 z4 z5 </list> 
+         *      <value> v </value> 
+         * </channel> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the list of the constraint not necessary the scope
+         * @param startIndex the starting index for list
+         * @param value the value
+         */
+        virtual void buildConstraintChannel(string id, vector<XVariable*>& list, int startIndex, XVariable* value) {
+            throw runtime_error("channel with 1 list and 1 value constraint is not yet supported");
+        }
+
+
+
+        // ##########################################################
+        // Packing and schedulling constraints
+        // ##########################################################
+
+
+        /**
+         * The callback function related to a stretch constraint with values and widths
+         * See http://xcsp.org/specifications/stretch
+         * 
+         * 
+         * Example: 
+         * <stretch> 
+         *      <list> x1 x2 x3 x4 x5 x6 x7 </list> 
+         *      <values> 1 2 3 0 </values> 
+         *      <widths> 1..3 1..3 2..3 2..4 </widths> 
+         * </stretch> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param values the list of values
+         * @param widths the list of intervals for widths
+         */
+        virtual void buildConstraintStretch(string id, vector<XVariable*>& list, vector<int>& values, vector<XInterval>& widths) {
+            throw runtime_error("stretch constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a stretch constraint with values, widths and patterns
+         * See http://xcsp.org/specificaitions/stretch
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param values the list of values
+         * @param widths the list of intervals for widths
+         * @param patterns
+         */
+        virtual void buildConstraintStretch(string id, vector<XVariable*>& list, vector<int>& values, vector<XInterval>& widths, vector<vector<int>>& patterns) {
+            throw runtime_error("stretch constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a no overlap constraint with variable origins and int lengths
+         * See http://xcsp.org/specifications/noOverlap
+         * 
+         * 
+         * Example: 
+         * <noOverlap> 
+         *      <origins> x1 x2 x3 </origins> 
+         *      <lenghts> l1 l2 l3 </lenghts> 
+         * </noOverlap> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param origins the vector of origins
+         * @param lengths the vector of lengths (here int)
+         * @param zeroIgnored are zero ignored?
+         */
+        virtual void buildConstraintNoOverlap(string id, vector<XVariable*>& origins, vector<int>& lengths, bool zeroIgnored) {
+            throw runtime_error("nooverlap with int lengths constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a no overlap constraint with variable origins and variable lengths
+         * See http::/xcsp.org/specifications/noOverlap
+         * 
+         * 
+         * Example: 
+         * <noOverlap> 
+         *      <origins> x1 x2 x3 </origins> 
+         *      <lengths> z1 z2 z3 </lengths> 
+         * </noOverlap> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param origins the vector of origins
+         * @param lengths the vector of lengths (here variables)
+         * @param zeroIgnored are zero ignored?
+         */
+        virtual void buildConstraintNoOverlap(string id, vector<XVariable*>& origins, vector<XVariable*>& lengths, bool zeroIgnored) {
+            throw runtime_error("nooverlap with variable lengths constraint is not yet supported");
+        }
