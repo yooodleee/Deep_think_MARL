@@ -794,4 +794,254 @@ namespace XCSP3Core {
         }
 
 
-        
+        /**
+         * The callback function related to a sum constraint with trees in list
+         * 
+         * 
+         * Example: 
+         * <sum> 
+         *      <list>or(eq(x[5],0),eq(x[7],0)) or(eq(x[1],0),eq(x[2],0),eq(x[8],0)) or(eq(x[0],0),eq(x[3],0),eq(x[4],0),eq(x[6],0),eq(x[9],0))</list>
+         *      <condition> (gt,y) </condition> 
+         * </sum>  
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the different trees
+         * @param cond the condition (See XCondition obj)
+         */
+        virtual void buildConstraintSum(string id, vector<Tree*>& trees, XCondition& cond) {
+            throw runtime_error("sum constraint with expressions not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a sum constraint with trees in list
+         * 
+         * 
+         * Example: 
+         * <sum> 
+         *      <list>or(eq(x[5],0),eq(x[7],0)) or(eq(x[1],0),eq(x[2],0),eq(x[8],0)) or(eq(x[0],0),eq(x[3],0),eq(x[4],0),eq(x[6],0),eq(x[9],0))</list>
+         *      <coeffs>1 2 3</coeffs> 
+         *      <condition> (gt,y) </condition> 
+         * </sum> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the different trees
+         * @param coeffs the coeffs. 
+         * @param cond the condition (See XCondition obj)
+         */
+        virtual void buildConstraintSum(string id, vector<Tree*>& trees, vector<int>& coeffs, XCondition& cond) {
+            throw runtime_error("sum constraint with expressions and coefs not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a atmost constraint
+         * This is a special count constraint
+         * This callback is called if #recognizeSpecialCountCases is enabled (this is the case by default)
+         * See http://xcsp.org/specifications/count
+         * 
+         * 
+         * Example: 
+         * <count id="c4"> 
+         *      <list> y1 y2 y3 y4 </list> 
+         *      <values> 0 </values> 
+         *      <condition> (le,2) </condition> 
+         * </count> 
+         * 
+         * Here at most 2 variables from y1...y4 can have value 0
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param value the value
+         * @param k the maximum num of variables that can take the value
+         */
+        virtual void buildConstraintAtMost(string id, vector<XVariable*>& list, int value, int k) {
+            throw runtime_error("atmost constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a atleast constraint
+         * Ths is a special count constraint
+         * This callback is called if #recognizeSpecialCountCases is enabled
+         * See http://xcsp.org/specifications/count
+         * 
+         * 
+         * Example: 
+         * <count id="c3"> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <values> 1 </values> 
+         *      <condition> (ge,3) </condition> 
+         * </count> 
+         * 
+         * Here at least 3 variables from x1...x5 must have value 1
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param value the value
+         * @param k the minimum num of variables that can take the value
+         */
+        virtual void buildConstraintAtLeast(string id, vector<XVariable*>& list, int value, int k) {
+            throw runtime_error("atleast constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a exactly k constraint
+         * THis is a special count counstraint
+         * This callback is called if #recognizeSpecialCountCases is enabled
+         * See http://xcsp.org/specifications/count
+         * 
+         * 
+         * Example: 
+         * <count id="c5"> 
+         *      <list> z1 z2 z3 </list> 
+         *      <values> 0 </values> 
+         *      <condition> (eq,2) </condition> 
+         * </count> 
+         * 
+         * Here exactly 2 variables from z1...z4 must have value 0
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param value the value
+         * @param k the exact num of variables that can take the value
+         */
+        virtual void buildConstraintExactlyK(string id, vector<XVariable*>& list, int value, int k) {
+            throw runtime_error("exactly K constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a exactly K variable constraint
+         * THis is a special count constraint
+         * This callback is called if #recognizeSpecialCountCases is enabled
+         * See http://xcsp.org/specifications/count
+         * 
+         * 
+         * Example: 
+         * <count id="c5"> <!-- exactly --> 
+         *      <list> z1 z2 z3 z4 </list> 
+         *      <values> 0 </values> 
+         *      <condition> (eq,z5) </condition> 
+         * </count> 
+         * 
+         * 
+         * Here exactly z5 variables from z1...z4 must have value 0
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param value the value
+         * @param x the exact num of variables that can take the value (here it is a vairable)
+         */
+        virtual void buildConstraintExactlyVariable(string id, vector<XVariable*>& list, int value, XVariable* x) {
+            throw runtime_error("exactly Variable constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a among constraint
+         * This is a special count constraint
+         * This callback is called if #recognizeSpecialCountCases is enabled
+         * See http://xcsp.org/specification/count
+         * 
+         * 
+         * Example: 
+         * <count id="c2"> 
+         *      <list> w1 w2 w3 w4 </list> 
+         *      <values> 1 5 8 </list> 
+         *      <condition> (eq, k2) </condition> 
+         * </count> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param value the value
+         * @param k
+         */
+        virtual void buildConstraintAmong(string id, vector<XVariable*>& list, vector<int>& values, int k) {
+            // TODO AMONG
+            throw runtime_error("Among constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a count constraint with integer values
+         * See http://xcsp.org/specifications/count
+         * 
+         * 
+         * Example: 
+         * <count id="c1">
+         *      <list> v1 v2 v3 v4 </list> 
+         *      <values> 2 4 </values> 
+         *      <condition> (ne,k1) </condition> 
+         * </count> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param value the set of values (here set of ints)
+         * @param k the num of variables
+         * @param xc the condition (see #XCondition)
+         */
+        virtual void buildConstraintCount(string id, vector<XVariable*>& list, vector<int>& values, XCondition& xc) {
+            throw runtime_error("count with integer values constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a count constraint with integer variables
+         * See http://xcsp.org/specifications/count
+         * 
+         * 
+         * Example: 
+         * <count id="c1"> 
+         *      <list> v1 v2 v3 v4 </list> 
+         *      <values> x1 x2 </values> 
+         *      <condition> (ne,k1) </condition> 
+         * </count> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param value the set of values (here set of variables)
+         * @param k the num of vairables
+         * @param xc the condition (see #XCondition)
+         */
+        virtual void buildConstraintCount(string id, vector<XVariable*>& list, vector<XVariable*>& values, XCondition& xc) {
+            throw runtime_error("count with variables values constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a nValues constraint with exception 
+         * See http://xcsp.org/specifications/nValues
+         * 
+         * 
+         * Example: 
+         * <nValues id="c3"> 
+         *      <list> z1 z2 z3 z4 </list> 
+         *      <except> 0 </except> 
+         *      <condition> (eq,2) </condition> 
+         * </nValues> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param except the set of excepted values
+         * @param xc the condition (see #XCondition)
+         */
+        virtual void buildConstraintNValues(string id, vector<XVariable*>& list, vector<int>& except, XCondition& xc) {
+            throw runtime_error("NValues with exception constraint is not yet supported");
+        }
+
+
+        /**
+         * 
+         */
