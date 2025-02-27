@@ -1579,3 +1579,540 @@ namespace XCSP3Core {
         virtual void buildConstraintNoOverlap(string id, vector<XVariable*>& origins, vector<XVariable*>& lengths, bool zeroIgnored) {
             throw runtime_error("nooverlap with variable lengths constraint is not yet supported");
         }
+
+
+        /**
+         * The callback function related to a no overlap constraint with variable origins and 3 dimensioanl int lengths
+         * See http://xcsp.org/specifications/noOverlap
+         * 
+         * 
+         * Example: 
+         * <noOverlap> 
+         *      <origins> (x1,y2,z1)(x2,y2,z2)(x3,y3,z3)(x4,y4,z4) </origins> 
+         *      <lengths> (2,4,1)(4,2,3)(5,1,2)(3,3,2) </lengths> 
+         * </noOverlap> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param origins the vector of origins
+         * @param lengths the vector of lengths (here vector of int)
+         * @param zeroIgnored are zero ignored?
+         */
+        virtual void buildConstraintNoOverlap(string id, vector<vector<XVariable*>>& origins, vector<vector<int>>& lengths, bool zeroIgnored) {
+            throw runtime_error("K dim nooverlap with int lengths constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a no overlap constraint with variable origins and 3 dimensioanl variable lengths
+         * See http://xcsp.org/specifications/noOverlap
+         * 
+         * 
+         * Example: 
+         * <noOverlap> 
+         *      <origins> (x1,y1,z1)(x2,y2,z2)(x3,y3,z3)(x4,y4,z4) </origins> 
+         *      <lengths> (a,b,c)(d,e,f)(g,h,i)(l,m,n) </lengths> 
+         * </noOverlap> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param origins the vector of origins
+         * @param lengths the vector of lengths (here vector of variables)
+         * @param zeroIgnored are zero ignored?
+         */
+        virtual void buildConstraintNoOverlap(string id, vector<vector<XVariable*>>& origins, vector<vector<XVariable*>>& lengths, bool zeroIgnored) {
+            throw runtime_error("K dim nooverlap with variable lengths constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a cumulative constraint with variable origins, int lengths and int heights
+         * See http://xcsp.org/specifications/cumulative
+         * 
+         * 
+         * Example: 
+         * <cumulative> 
+         *      <origins> s1 s2 s3 s4 </origins> 
+         *      <lengths> 1 2 3 4 </lengths> 
+         *      <heights> 3 4 5 6 </heights> 
+         *      <condition> (le,4) </condition> 
+         * </cumulative> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param origins the vector of origins
+         * @param lengths the vector of lengths (here ints)
+         * @param heights the vector of heights (here ints)
+         * @param xc the condition (see XCondition)
+         */
+        virtual void buildConstraintCumulative(string id, vector<XVariable*>& origins, vector<int>& lengths, vector<int>& heights, XCondition& xc) {
+            throw runtime_error("cumulative (int lengths, int heights) constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related a cumulative constraint with variable origin, int lengths and variable heights
+         * See http://xcsp.origins/specifications/cumulative
+         * 
+         * 
+         * Example: 
+         * <cumulative> 
+         *      <origins> s1 s2 s3 s4 </origins> 
+         *      <lengths> 1 2 3 4 </lengths> 
+         *      <heights> h1 h2 h3 h4 </heights> 
+         *      <condition> (le,4) </condition> 
+         * </cumulative> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param origins the vector of origins
+         * @param lengths the vector of lengths (here ints)
+         * @param heights the vector of heights (here variables)
+         * @param xc the condition (see XCondition)
+         */
+        virtual void buildConstraintCumulative(string id, vector<XVariable*>& origins, vector<int>& lengths, vector<XVariable*>& varHeights, XCondition& xc) {
+            throw runtime_error("cumulative (int lengths, var heights) constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a cumulative constraint with variable origin, variable lengths and int heights
+         * See http://xcsp.org/specifications/cumulative
+         *
+         * 
+         * Example:
+         * <cumulative>
+         *     <origins> s1 s2 s3 s4 </origins>
+         *     <lengths> l1 l2 l3 l4 </lengths>
+         *     <heights> 1 2 3 4 </heights>
+         *     <condition> (le,4) </condition>
+         * </cumulative>
+         *
+         * 
+         * @param id the id (name) of the constraint
+         * @param origins the vector of origins
+         * @param lengths the vector of lenghts (here variables)
+         * @param heights the vector of heights (here ints)
+         * @param xc the condition (see XCondition)
+         */
+        virtual void buildConstraintCumulative(string id, vector<XVariable *> &origins, vector<XVariable *> &lengths, vector<int> &heights, XCondition &xc) {
+            throw runtime_error("cumulative (var lengths, int heights) constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a cumulative constraint with variable origin, variable lengths and variable heights
+         * See http://xcsp.org/specifications/cumulative
+         *
+         * 
+         * Example:
+         * <cumulative>
+         *     <origins> s1 s2 s3 s4 </origins>
+         *     <lengths> l1 l2 l3 l4 </lengths>
+         *     <heights> h1 h2 h3 h4 </heights>
+         *     <condition> (le,4) </condition>
+         * </cumulative>
+         *
+         * 
+         * @param id the id (name) of the constraint
+         * @param origins the vector of origins
+         * @param lengths the vector of lenghts (here variables)
+         * @param heights the vector of heights (here variables)
+         * @param xc the condition (see XCondition)
+         */
+        virtual void
+        buildConstraintCumulative(string id, vector<XVariable *> &origins, vector<XVariable *> &lengths, vector<XVariable *> &heights, XCondition &xc) {
+            throw runtime_error("cumulative (var lengths, var heights) constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a cumulative constraint with variable origin, int lengths and int heights and variable ends
+         * See http://xcsp.org/specifications/cumulative
+         *
+         * 
+         * Example:
+         * <cumulative>
+         *     <origins> s1 s2 s3 s4 </origins>
+         *     <lengths> 1 2 3 4 </lengths>
+         *     <heights> 1 2 3 4 </heights>
+         *     <end> e1 e2 e3 e4 </end>
+         *     <condition> (le,4) </condition>
+         * </cumulative>
+         *
+         * 
+         * @param id the id (name) of the constraint
+         * @param origins the vector of origins
+         * @param lengths the vector of lenghts (here ints)
+         * @param heights the vector of heights (here ints)
+         * @param ends the vector of ends (here variables)
+         * @param xc the condition (see XCondition)
+         */
+        virtual void buildConstraintCumulative(string id, vector<XVariable *> &origins, vector<int> &lengths, vector<int> &heights, vector<XVariable *> &ends,
+                                               XCondition &xc) {
+            throw runtime_error("cumulative (int lengths, int heights) constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a cumulative constraint with variable origin, int lengths and variable heights and variable ends
+         * See http://xcsp.org/specifications/cumulative
+         *
+         * 
+         * Example:
+         * <cumulative>
+         *     <origins> s1 s2 s3 s4 </origins>
+         *     <lengths> 1 2 3 4 </lengths>
+         *     <heights> h1 h2 h3 h4 </heights>
+         *     <end> e1 e2 e3 e4 </end>
+         *     <condition> (le,4) </condition>
+         * </cumulative>
+         *
+         * 
+         * @param id the id (name) of the constraint
+         * @param origins the vector of origins
+         * @param lengths the vector of lenghts (here ints)
+         * @param heights the vector of heights (here variables)
+         * @param ends the vector of ends (here variables)
+         * @param xc the condition (see XCondition)
+         */
+        virtual void
+        buildConstraintCumulative(string id, vector<XVariable *> &origins, vector<int> &lengths, vector<XVariable *> &varHeights, vector<XVariable *> &ends,
+                                  XCondition &xc) {
+            throw runtime_error("cumulative (int lengths, var heights, ends) constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a cumulative constraint with variable origin, variable lengths and int heights and variable ends
+         * See http://xcsp.org/specifications/cumulative
+         *
+         * 
+         * Example:
+         * <cumulative>
+         *     <origins> s1 s2 s3 s4 </origins>
+         *     <lengths> l1 l2 l3 l4 </lengths>
+         *     <heights> 1 2 3 4 </heights>
+         *     <end> e1 e2 e3 e4 </end>
+         *     <condition> (le,4) </condition>
+         * </cumulative>
+         *
+         * 
+         * @param id the id (name) of the constraint
+         * @param origins the vector of origins
+         * @param lengths the vector of lenghts (here variables)
+         * @param heights the vector of heights (here ints)
+         * @param ends the vector of ends (here variables)
+         * @param xc the condition (see XCondition)
+         */
+        virtual void
+        buildConstraintCumulative(string id, vector<XVariable *> &origins, vector<XVariable *> &lengths, vector<int> &heights, vector<XVariable *> &ends,
+                                  XCondition &xc) {
+            throw runtime_error("cumulative (var lengths, int heights, ends) constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a cumulative constraint with variable origin, variable lengths and variable heights and variable ends
+         * See http://xcsp.org/specifications/cumulative
+         *
+         * 
+         * Example:
+         * <cumulative>
+         *     <origins> s1 s2 s3 s4 </origins>
+         *     <lengths> l1 l2 l3 l4 </lengths>
+         *     <heights> h1 h2 h3 h4 </heights>
+         *     <end> e1 e2 e3 e4 </end>
+         *     <condition> (le,4) </condition>
+         * </cumulative>
+         *
+         * 
+         * @param id the id (name) of the constraint
+         * @param origins the vector of origins
+         * @param lengths the vector of lenghts (here variables)
+         * @param heights the vector of heights (here variables)
+         * @param ends the vector of ends (here variables)
+         * @param xc the condition (see XCondition)
+         */
+        virtual void
+        buildConstraintCumulative(string id, vector<XVariable *> &origins, vector<XVariable *> &lengths, vector<XVariable *> &heights,
+                                  vector<XVariable *> &ends, XCondition &xc) {
+            throw runtime_error("cumulative (var lengths, var heights, ends) constraint is not yet supported");
+        }
+
+
+
+        // ##################################################################
+        // instantiation constraints
+        // ##################################################################
+
+
+        /**
+         * The callback function related to an instantiation  constraint
+         * See http://xcsp.org/specifications/instantiation
+         *
+         * 
+         * Example:
+         * <instantiation>
+         *   <list> x y z </list>
+         *   <values> 12 4 30 </values>
+         * </instantiation>
+         *
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param values the value for each variable
+         */
+        virtual void buildConstraintInstantiation(string id, vector<XVariable *> &list, vector<int> &values) {
+            throw runtime_error("instantiation constraint not yet supported");
+        }
+
+
+
+        // ##########################################################
+        // Graph constraints
+        // ##########################################################
+
+
+        /**
+         * The callback function related to circuit   constraint
+         * See http://xcsp.org/specifications/circuit
+         *
+         * 
+         * Example:
+         * <circuit>
+         *   <list> x y z </list>
+         * </circuit>
+         *
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param startIndex the start index for the list
+         */
+        virtual void buildConstraintCircuit(string id, vector<XVariable *> &list, int startIndex) {
+            throw runtime_error("circuit constraint not yet supported");
+        }
+
+
+        /**
+         * The callback function related to circuit   constraint with defined int size
+         * See http://xcsp.org/specifications/circuit
+         *
+         * 
+         * Example:
+         * <circuit>
+         *   <list> x y z </list>
+         *   <size> 4 </size>
+         * </circuit>
+         *
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param startIndex the start index for the list
+         * @param size the size of the circuit (here an int)
+         */
+        virtual void buildConstraintCircuit(string id, vector<XVariable *> &list, int startIndex, int size) {
+            throw runtime_error("circuit constraint not yet supported");
+        }
+
+
+        /**
+         * The callback function related to circuit   constraint with defined variable size
+         * See http://xcsp.org/specifications/circuit
+         *
+         * 
+         * Example:
+         * <circuit>
+         *   <list> x y z </list>
+         *   <size> s </size>
+         * </circuit>
+         *
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the list of variables (not necessary the scope)
+         * @param startIndex the start index for the list
+         * @param size the size of the circuit (here an variable)
+         */
+        virtual void buildConstraintCircuit(string id, vector<XVariable *> &list, int startIndex, XVariable *size) {
+            throw runtime_error("circuit constraint not yet supported");
+        }
+
+
+
+        // ##########################################################
+        // Objectives
+        // ##########################################################
+
+
+        /**
+         * The callback function related to an objective minimize an expression
+         * See http://xcsp.org/specifications/objectives
+         *
+         * 
+         * Example:
+         * <objectives>
+         *    <minimize> add(x,mul(y,2)) </minimize>
+         * </objectives>
+         *
+         * 
+         * @param expr the expression
+         */
+        virtual void buildObjectiveMinimizeExpression(string expr) {
+            throw runtime_error("minimize expression objective not yet supported");
+        }
+
+
+        /**
+         * The callback function related to an objective maximize an expression
+         * See http://xcsp.org/specifications/objectives
+         *
+         * 
+         * Example:
+         * <objectives>
+         *    <maximize> add(x,2) </maximize>
+         * </objectives>
+         *
+         * 
+         * @param expr the expression
+         */
+        virtual void buildObjectiveMaximizeExpression(string expr) {
+            throw runtime_error("maximize expression objective not yet supported");
+        }
+
+
+        /**
+         * The callback function related to an objective minimize a variable
+         * See http://xcsp.org/specifications/objectives
+         *
+         * 
+         * Example:
+         * <objectives>
+         *    <minimize> x </minimize>
+         * </objectives>
+         *
+         * 
+         * @param x the variable
+         */
+        virtual void buildObjectiveMinimizeVariable(XVariable *x) {
+            throw runtime_error("minimize variable objective not yet supported");
+        }
+
+
+        /**
+         * The callback function related to an objective maximize a variable
+         * See http://xcsp.org/specifications/objectives
+         *
+         * 
+         * Example:
+         * <objectives>
+         *    <maximize> x </maximize>
+         * </objectives>
+         *
+         * 
+         * @param x the variable
+         */
+        virtual void buildObjectiveMaximizeVariable(XVariable *x) {
+            throw runtime_error("maximize variable objective not yet supported");
+        }
+
+
+        /**
+         * The callback function related to an objective minimize a sum/product
+         * See http://xcsp.org/specifications/objectives
+         *
+         * 
+         * Example:
+         * <objectives>
+         *   <minimize type="sum">
+         *     <list> x1 x2 x3 x4 x5 </list>
+         *     <coeffs> 2 4 1 4 8 </coeffs>
+         *   </minimize>
+         * <objectives>
+         *
+         * 
+         * @param type SUM, PRODUCT...
+         * @param list the scope
+         * @param coefs the vector of coefficients
+         */
+        virtual void buildObjectiveMinimize(ExpressionObjective type, vector<XVariable *> &list, vector<int> &coefs) {
+            throw runtime_error("minimize objective sum...  not yet supported");
+        }
+
+
+        /**
+         * The callback function related to an objective maximize a sum/product
+         * See http://xcsp.org/specifications/objectives
+         *
+         * 
+         * Example:
+         * <objectives>
+         *   <maximize type="sum">
+         *     <list> x1 x2 x3 x4 x5 </list>
+         *     <coeffs> 2 4 1 4 8 </coeffs>
+         *   </maximize>
+         * <objectives>
+         *
+         * 
+         * @param type SUM, PRODUCT...
+         * @param list the scope
+         * @param coefs the vector of coefficients
+         */
+        virtual void buildObjectiveMaximize(ExpressionObjective type, vector<XVariable *> &list, vector<int> &coefs) {
+            throw runtime_error("maximize objective   not yet supported");
+        }
+
+
+        /**
+         * The callback function related to an objective minimize a sum/product with coefs = 1
+         * See http://xcsp.org/specifications/objectives
+         *
+         * 
+         * Example:
+         * <objectives>
+         *   <minimize type="sum">
+         *     <list> x1 x2 x3 x4 x5 </list>
+         *   </minimize>
+         * <objectives>
+         *
+         * 
+         * @param type SUM, PRODUCT...
+         * @param list the scope
+         */
+        virtual void buildObjectiveMinimize(ExpressionObjective type, vector<XVariable *> &list) {
+            throw runtime_error("minimize objective   not yet supported");
+        }
+
+
+        /**
+         * The callback function related to an objective maximize a sum/product with coefs = 1
+         * See http://xcsp.org/specifications/objectives
+         *
+         * 
+         * Example:
+         * <objectives>
+         *   <maximize type="sum">
+         *     <list> x1 x2 x3 x4 x5 </list>
+         *   </maximize>
+         * <objectives>
+         *
+         * 
+         * @param type SUM, PRODUCT...
+         * @param list the scope
+         */
+        virtual void buildObjectiveMaximize(ExpressionObjective type, vector<XVariable *> &list) {
+            throw runtime_error("maximize objective   not yet supported");
+        }
+
+
+        /**
+         * The callback function related to annotations.
+         * It provides the set of decision variables related to the problem.
+         * @param list
+         */
+
+        virtual void buildAnnotationDecision(vector<XVariable *> &list) {}
+    };
+
+}
+
+#endif //COSOCO_XCSP3CORECALLBACKS_H
