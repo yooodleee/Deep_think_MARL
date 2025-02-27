@@ -524,6 +524,274 @@ namespace XCSP3Core {
             throw runtime_error("MDD constraint is not yet supported");
         }
 
-        // 527
-    }
-}
+        // ##########################################################
+        // Comparison Constraints
+        // ##########################################################
+
+
+        /**
+         * The callback function related to a all different constraint.
+         * See http://xcsp.org/specifications/alldifferent
+         * 
+         * Example: 
+         * <allDifferent> 
+         *  x1 x2 x3 x4
+         * </allDifferent> 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         */
+        virtual void buildConstraintAlldifferent(string id, vector<XVariable*>& list) {
+            throw runtime_error("AllDiff constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a alldifferent constraint with expression
+         * See http://xcsp.org/specifications/alldifferent
+         * 
+         * Example: 
+         * <allDifferent> 
+         *      add(q[0],0) add(q[1],1) add(q[2],2) add(q[3],3) add(q[4],4) add(q[5],5) add(q[6],6) add(q[7],7)
+         * </allDifferent> 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the trees of the constraint
+         */
+        virtual void buildConstraintAlldifferent(string id, vector<Tree*>& list) {
+            throw runtime_error("AllDiff constraint with expression is not yet supported");
+        }
+
+        /**
+         * The callback function related to a alldifferent with some excepted values constraint
+         * See http://xcsp.org/specifications/alldifferent
+         * 
+         * Example: 
+         * <allDifferent> 
+         *      x1 x2 x3 x4 x5
+         *      <except>0</except> 
+         * </allDifferent> 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param except the set of excepted values
+         */
+        virtual void buildConstraintAlldifferentExcept(string id, vector<XVariable*>& list, vector<int>& except) {
+            throw runtime_error("AllDiff constraint with exception is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a alldifferent list constraint
+         * See http://xcsp.org/specifications/alldifferent
+         * 
+         * Example: 
+         * <allDifferent id="c1"> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <list> y1 y2 y3 y4 </list> 
+         * <allDifferent> 
+         * 
+         * @param id the id (name) of the constraint
+         * @param lists the set of lists (not the scope, a vairable may appear at different place!)
+         */
+        virtual void buildConstraintAlldifferentList(string id, vector<vector<XVariable*>>& lists) {
+            throw runtime_error("AllDiff list constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a alldifferent matrix constraint
+         * See http://xcsp.org/specifications/alldifferent
+         * 
+         * Example: 
+         * <allDifferent id="c1"> 
+         *      <matrix> 
+         *          (x1,x2,x3,x4,x5)
+         *          (y1,y2,y3,y4,y5)
+         *          (z1,z2,z3,z4,z5)
+         *      </matrix> 
+         * </allDifferent> 
+         * 
+         * @param id the id (name) of the constraint
+         * @param matrix the matrix (not the scope, a variable may appear at different place!)
+         */
+        virtual void buildConstraintAlldifferentMatrix(string id, vector<vector<XVariable*>>& matrix) {
+            throw runtime_error("AllDiff matrix constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a allequal constraint
+         * See http://xcsp.org/specifications/allEqual
+         * 
+         * Example: 
+         * <allEqual> 
+         *      x1 x2 x3 x4 x5
+         * </allEqual> 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         */
+        virtual void buildConstraintAllEqual(string id, vector<XVariable*>& list) {
+            throw runtime_error("Allequal constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to a not all equal constraint
+         * This is a special case of nvalues constraint
+         * Recognized if #recognizeNValuesCases is enabled (this is the case by default)
+         * See http://xcsp.org/specifications/nValues
+         * 
+         * Example: 
+         * <nValues id="c1"> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <condition> (gt,1) </condition> 
+         * </nValues> 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constrant
+         */
+        virtual void buildConstraintNotAllEqual(string id, vector<XVariable*>& list) {
+            throw runtime_error("NotAllequal constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to an ordered constraint
+         * See http://xcsp.org/specifications/ordered
+         * 
+         * Ordered is LE, LT, GE, GT... see OrderType in XCSPConstraints.h 
+         * 
+         * Example: 
+         * <ordered> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <operator> lt </operator> 
+         * </ordered> 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param order the order LT, LE...
+         */
+        virtual void buildConstraintOrdered(string id, vector<XVariable*>& list, OrderType order) {
+            throw runtime_error("Ordered constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to an ordered constraint
+         * See http://xcsp.org/specifications/ordered
+         * 
+         * Ordered is LE, LT, GE, GT... See OrderType in XCSPConstraints.h
+         * 
+         * Example: 
+         * <ordered> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <operator> lt </operator> 
+         * </ordered> 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param order the order LT, LE... 
+         */
+        virtual void buildConstraintOrdered(string id, vector<XVariable*>& list, vector<int>& lengths, OrderType order) {
+            throw runtime_error("Ordered constraint wirt lenghts is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to an ordered list constraint (this is a lex constraint)
+         * See http://xcsp.org/specifications/ordered
+         * 
+         * Example: 
+         * <ordered> 
+         *      <list> x1 x2 x3 x4 </list> 
+         *      <list> y1 y2 y3 y4 </list> 
+         *      <operator> lt </operator> 
+         * </ordered> 
+         * 
+         * @param id the id (name) of the constraint
+         * @param lists the set of lists (not the scope, a variable may appear at different place!)
+         * @param order the order LT, LE... 
+         */
+        virtual void buildConstraintLex(string id, vector<vector<XVariable*>>& lists, OrderType order) {
+            throw runtime_error("Lex constraint is not yet supported");
+        }
+
+
+        /**
+         * The callback function related to an ordered matrix constraint
+         * See http://xcsp.org/specifications/ordered
+         * 
+         * Example: 
+         * <ordered> 
+         *      <matrix> 
+         *          (x1,x2,x3)
+         *          (y1,y2,y3)
+         *          (z1,z2,z3)
+         *      </matrix> 
+         *      <operator> lt </operator> 
+         * </ordered> 
+         * 
+         * @param id the id (name) of the constraint
+         * @param matrix the matrix (not the scope, a variabl may appear at different place!)
+         * @param order the order LT, LE... 
+         */
+        virtual void buildConstraintLexMatrix(string id, vector<vector<XVariable*>>& matrix, OrderType order) {
+            throw runtime_error("Lex matrix constraint is not yet supported");
+        }
+
+
+        // ##########################################################
+        // Summing and counting constraints
+        // ##########################################################
+
+
+        /**
+         * The callback function related to an sum constraint
+         * See http://xcsp.org/specifications/sum
+         * 
+         * XCondition is an obj with on OrderType (LE, LT...) an operandType (INTEGER, INTERVAL or VARIABLE)
+         * depending the val of this field, either val (if operandType is INTEGER), main/max (INTERVAL) or var (VARIABLE)
+         * is useful. 
+         * 
+         * 
+         * Example: 
+         * <sum> 
+         *      <list> x1 x2 x3 </list> 
+         *      <coeffs> 1 2 3 </coeffs> 
+         *      condition> (gt,y) </condition> 
+         * </sum> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param coeffs the coefficients (here int)
+         * @param cond the condition (See XCondition obj)
+         */
+        virtual void buildConstraintSum(string id, vector<XVariable*>& list, vector<int>& coeffs, XCondition& cond) {
+            throw runtime_error("sum constraint is not yet supported");
+        }
+
+        /**
+         * The callback function related to an sum constraint with all coeffs are equal to one
+         * See http://xcsp.org/specifications/sum
+         * 
+         * 
+         * Example: 
+         * <sum> 
+         *      <list> x1 x2 x3 </list> 
+         *      <condition> (gt,y) </condition> 
+         * </sum> 
+         * 
+         * 
+         * @param id the id (name) of the constraint
+         * @param list the scope of the constraint
+         * @param cond the condition (See XCondition obj)
+         */
+        virtual void buildConstraintSum(string id, vector<XVariable*>& list, XCondition& cond) {
+            throw runtime_error("unweighted sum constraint is not yet supported");
+        }
+
+
+        
