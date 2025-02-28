@@ -478,6 +478,194 @@ namespace XCSP3Core {
         };
 
 
+        /************************************************************
+         * Actions performed on NVALUES tag
+         ***********************************************************/
+        class NValuesTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintNValues* constraint;
+            NValuesTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on COUNT tag
+         ***********************************************************/
+        class CountTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintCount* constraint;
+            CountTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on CARDINALITY tag
+         ***********************************************************/
+        class CardinalityTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintCardinality* constraint;
+            CardinalityTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         ************************************************************
+         *                  CONNECTION CONSTRAINTS
+         ************************************************************
+         ***********************************************************/
+
+
+        /************************************************************
+         * Actions performed on CHANNEL tag
+         ***********************************************************/
+        class ChannelTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintChannel* constraint;
+            ChannelTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on ELEMENT tag
+         ***********************************************************/
+        class ElementTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintElement* constraint;
+            ElementTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on MAXIMUM or MINIMUM tag
+         ***********************************************************/
+        class MinMaxTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintMaximum* constraint;
+            MinMaxTagAction(XMLParser* parser, string tag)
+                : BasicConstraintTagAction(parser, tag) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         ************************************************************
+         *           PACKING and SCHEDULING CONSTRAINTS
+         ************************************************************
+         ***********************************************************/
+
+
+        /************************************************************
+         * Actions performed on STRETCH tag
+         ***********************************************************/
+        class StretchTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintStretch* constraint;
+            StretchTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on NOOVERLAP tag
+         ***********************************************************/
+        class NoOverlapTagAction : public BasicConstraintTagAction {
+        public:
+            bool diffn;
+            XConstraintNoOverlap* constraint;
+            NoOverlapTagAction(XMLParser* parser, string name) 
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on CUMULATIVE tag
+         ***********************************************************/
+        class CumulativeTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintCumulative* constraint;
+            CumulativeTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         ************************************************************
+         *                      OBJECTIVES
+         ************************************************************
+         ***********************************************************/
+        
+        class ObjectivesTagAction : public TagAction {
+        public:
+            XObjective* objective;
+            ObjectivesTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        class MinimizeOrMaximizeTagAction : public TagAction {
+        public:
+            MinimizeOrMaximizeTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            XObjective* obj;
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+        };
+
+
+        /************************************************************
+         * Actions performed on instantiation tag
+         ***********************************************************/
+        class InstantiationTagAction : public BasicConstraintTagAction {
+        public:
+            InstantiationTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            XConstraintInstantiation* constraint;
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on LIST tag
+         ***********************************************************/
+        class ListTagAction : public TagAction {
+        public:
+            int nbCallsToList;
+            // The first call stores datas inside this->parser->list
+            // the ith call (i>1) stores datas inside this->parser->manyLists[i-1];
+            ListTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+            void endTag() override;
+        };
+
+
         
     }
 }
