@@ -201,5 +201,283 @@ namespace XCSP3Core {
         void registerTagAction(TagActionList& tagList, TagAction& action) {
             tagList[action->getTagName()] = action;
         }
+
+
+        /**
+         * Parse a sequence of tokens. Each token can represent a compact list of array 
+         * variables, or a basic entity, or a template parameter
+         */
+        
+        void parseSequence(const UTF8String& txt, vector<XVariable*>& list, vector<char> delimiters = vector<char>());
+
+        void parseDomain(const UTF8String& txt, XDomainInteger& domain);
+
+        void parseListOfIntegerOrInterval(const UTF8String& txt, vector<XIntegerEntity*>& listToFill);
+
+        bool parseTuples(const UTF8String& txt, vector<vector<int>>& tuples);
+
+
+        /************************************************************
+         * a handler to silently ignore unknown tags
+         ***********************************************************/
+        class UnknownTagAction : public TagAction {
+        public:
+            UnknownTagAction(XMLParser* parser, string name) : TagAction(parser, name) { }
+
+            // AttributeList& attributes
+            virtual void beginTag(const AttributeList&) {
+                throw runtime_error("Unknown Tag");
+            }
+        };
+
+
+        /************************************************************
+         * Actions performed on INSTANCE tag
+         ***********************************************************/
+        class InstanceTagAction : public TagAction {
+        public:
+            InstanceTagAction(XMLParser* parser, string name) : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on VARIABLES tag
+         ***********************************************************/
+        class VariablesTagAction : public TagAction {
+        public:
+            VariablesTagAction(XMLParser* parser, string name) : TagAction(parser, name) { }
+            virtual void beginTag(const AttributeList& attributes) override;
+            virtual void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on VAR tag
+         ***********************************************************/
+        class VarTagAction : public TagAction {
+        private:
+            XVariable* variable;
+            XVariableArray* variableArray;
+            XDomainInteger* domain;
+            string id, classes;
+
+        public:
+            VarTagAction(XMLParser* parser, string name) 
+                : TagAction(parser, name)
+                , variable(NULL)
+                , variableArray(NULL)
+                , domain(NULL) { }
+            void beginTag(const AttributeList* attributes) override;
+            void text(const UTF8String txt, bool last) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on ARRAY tag
+         ***********************************************************/
+        class ArrayTagAction : public TagAction {
+        public:
+            XVariableArray* varArray;
+            XDomainInteger* domain;
+            string id, classes;
+            vector<int> sizes;
+
+
+            ArrayTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name)
+                , varArray(NULL)
+                , domain(NULL) { }
+            
+            void beginTag(const AttributeList* attributes) override;
+            void endTag() override;
+
+
+            // UTF8String txt, bool last
+            void text(const UTF8String txt, bool) override {
+                this->parser->parseDomain(txt, *domain);
+            }
+        };
+
+        class DomainTagAction : public TagAction {
+        public:
+            XDomainInteger* d;
+            string forAttr;
+
+            DomainTagAction(XMLParser* parser, string name) : TagAction(parser, name) { }
+
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on CONSTRAINTS tag
+         ***********************************************************/
+        class COnstraintsTagAction : public TagAction {
+        public:
+            COnstraintsTagAction(XMLParser* parser, string name) : TagAction(parser, name) { }
+
+            // AttributeList& attributes
+            virtual void beginTag(const AttributeList&) {
+                this->checkParentTag("instance");
+                this->parser->manager->beginConstraints();
+            }
+
+            virtual void endTag() {
+                this->parser->manager->endConstraints();
+            }
+        };
+
+
+        /************************************************************
+         * All constraint MUST inherit this tagAction
+         ***********************************************************/
+        class BasicConstraintTagAction : public TagAction {
+        public:
+            XConstraintGroup* group;
+            string id;
+            BasicConstraintTagAction(XMLParser* parser, string name) : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+        };
+
+
+        /************************************************************
+         * Actions performed on ExTENSION tag
+         ***********************************************************/
+        class ExtensionTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintExtension* constraint;
+            ExtensionTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on INTENSION tag
+         ***********************************************************/
+        class IntensionTagAction : public BasicConstraintTagAction {
+        protected:
+            UTF8String fnc;
+
+        public:
+            XConstraintIntension* constraint;
+            IntensionTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         ************************************************************
+         *            CONSTRAINTS DEFINED ON LANGAUGE
+         ************************************************************
+         ***********************************************************/
+
+
+        /************************************************************
+         * Actions performed on REGULAR tag
+         ***********************************************************/
+        class RegularTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintRegular* constraint;
+            RegularTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on MDD tag
+         ***********************************************************/
+        class MDDTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintMDD* constraint;
+            MDDTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         ************************************************************
+         *            CONSTRAINTS DEFINED ON COMPARISON
+         ************************************************************
+         ***********************************************************/
+
+
+        /************************************************************
+         * Actions performed on ALLDIFF tag / ALLEQUAL
+         ***********************************************************/
+        class AllDiffEqualTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintAllDiff* alldiff;
+            XConstraintAllEqual* allequal;
+            XConstraint* ct;
+            AllDiffEqualTagAction(XMLParser* parser, string tag)
+                : BasicConstraintTagAction(parser, tag) { }
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on ORDERED tag
+         ***********************************************************/
+        class OrderedTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintOrdered* constraint;
+            OrderedTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on LEX tag
+         ***********************************************************/
+        class LexTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintLex* constraint;
+            LexTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         ************************************************************
+         *            COUNTING AND SUMMING CONSTRAINTS
+         ************************************************************
+         ***********************************************************/
+
+
+        /************************************************************
+         * Actions performed on SUM tag
+         ***********************************************************/
+        class SumTagAction : public BasicConstraintTagAction {
+        public:
+            XConstraintSum* constraint;
+            SumTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        
     }
 }
