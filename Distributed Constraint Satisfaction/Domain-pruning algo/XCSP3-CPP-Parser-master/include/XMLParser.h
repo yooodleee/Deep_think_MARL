@@ -666,6 +666,325 @@ namespace XCSP3Core {
         };
 
 
+        /************************************************************
+         * Actions performed on SUPPORTS CONFLICTS tag
+         ***********************************************************/
+        class ConflictOrSupportTagAction : public TagAction {
+        protected:
+        public:
+            ConflictOrSupportTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+        };
+
+
+        /************************************************************
+         * Actions performed on COEFFS tag
+         ***********************************************************/
+        class ConditionTagAction : public TagAction {
+        public:
+            ConditionTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            
+            // UTF8String txt, bool last
+            virtual void text(const UTF8String txt, bool) {
+                this->parser->condition += txt.to(this->parser->condition);
+            }
+
+            virtual void endTag() {
+                this->parser->condition = trim(this->parser->condition);
+            }
+        };
+
+
+        /************************************************************
+         * Actions performed on CONDITION tag
+         ***********************************************************/
+        class ListOfIntegerTagAction : public TagAction {
+        public:
+            ListOfIntegerTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            virtual void text(const UTF8String txt, bool last) override;
+        };
+
+
+        /************************************************************
+         * Actions performed on VALUES / VALUE tag
+         ***********************************************************/
+        class ListOfVariablesOrIntegerTagAction : public TagAction {
+            
+            vector<XVariable*>& listToFill;
+        public:
+            ListOfVariablesOrIntegerTagAction(XMLParser* parser, string nm, vector,XVariable*>& ltf)
+                : TagAction(parser, nm)
+                , listToFill(ltf) { }
+            virtual void beginTag(const AttributeList& attributes) override;
+            virtual void text(const UTF8String txt, bool last) override;
+        };
+
+        class ListOfVariablesOrIntegerOrIntervalTagAction : public TagAction {
+            
+            vector<XVariable*>& listToFill;
+        public:
+            ListOfVariablesOrIntegerOrIntervalTagAction(XMLParser* parser, string nm, vector<XVariable*>& ltf)
+                : TagAction(parser, nm)
+                , listToFill(ltf) { }
+            virtual void beginTag(const AttributeList& attributes) override;
+            virtual void text(const UTF8String txt, bool last) override;
+        };
+
+
+        /************************************************************
+         * Actions performed on ORIGINS tag
+         ************************************************************/
+        class OriginsTagAction : public TagAction {
+
+            vector<XVariable*>& listToFill;
+        public:
+            OriginsTagAction(XMLParser* parser, string nm, vector<XVariable*>& ltf)
+                : TagAction(parser, nm)
+                , listToFill(ltf) { }
+            virtual void beginTag(const AttributeList& attributes) override;
+            virtual void text(const UTF8String txt, bool last) override;
+        };
+
+
+        /************************************************************
+         * Actions performed on WIDTH tag
+         ***********************************************************/
+        class ListOfIntegerOrIntervalTagAction : public TagAction {
         
-    }
-}
+            vector<XIntegerEntity*>& listToFill;
+        public:
+            ListOfIntegerOrIntervalTagAction(XMLParser* parser, string nm, vector<XIntegerEntity*>& ltf)
+                : TagAction(parser, nm)
+                , listToFill(ltf) { }
+            virtual void beginTag(const AttributeList& attributes) override;
+            virtual void text(const UTF8String txt, bool last) override;
+        };
+
+
+        /************************************************************
+         * Actions performed on GROUP tag
+         ***********************************************************/
+        class GroupTagAction : public TagAction {
+        public:
+            XConstraintGroup* group;
+            GroupTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on SLIDE tag
+         ***********************************************************/
+        class SlideTagAction : public TagAction {
+        public:
+            XConstraintGroup* group;
+            vector<XVariable*> list;
+
+            int offset = 1;
+            bool circular = false;
+
+            SlideTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on GROUP tag
+         ***********************************************************/
+        class BlockTagAction : public TagAction {
+        public:
+            BlockTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on ARGS tag
+         ***********************************************************/
+        class ArgsTagAction : public TagAction {
+        public:
+            ArgsTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            virtual void text(const UTF8String txt, bool last) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on Operator tag
+         ***********************************************************/
+        class OperatorTagAction : public TagAction {
+        public:
+            OperatorTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void text(const UTF8String txt, bool last) override;
+        };
+
+
+        /************************************************************
+         * Actions performed on INDEX tag
+         ***********************************************************/
+        class IndexTagAction : public TagAction {
+        public:
+            IndexTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+        };
+
+
+        /************************************************************
+         * Actions performed on MATRIX TAG
+         ***********************************************************/
+        class MatrixTagAction : public TagAction {
+        public:
+            MatrixTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on START or FINAL tag
+         ***********************************************************/
+        class StringTagAction : public TagAction {
+        public:
+            StringTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void text(const UTF8String txt, bool last) override;
+        };
+
+
+        /************************************************************
+         * Actions performed on TRANSITIONS tag
+         ***********************************************************/
+        class TransitionsTagAction : public TagAction {
+        public:
+            int nb, val;
+            std::string from, to;
+            TransitionsTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+        };
+
+
+        /************************************************************
+         * Actions performed on TRANSITIONS tag
+         ***********************************************************/
+        class PatternsTagAction : public TagAction {
+        public:
+            vector<XVariable*>& listToFill;
+            PatternsTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+        };
+
+
+        class CircuitTagAction : public BasicConstraintTagAction {
+            XConstraintCircuit* constraint;
+        public:
+            CircuitTagAction(XMLParser* parser, string name)
+                : BasicConstraintTagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+            void endTag() override;
+        };
+
+
+        /************************************************************
+         * Actions performed on ANNOTATIONS TAG
+         ***********************************************************/
+        class AnnotationsTagAction : public TagAction {
+        public:
+            AnnotationsTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTag(const AttributeList& attributes) override;
+            void endTag() override;
+        };
+
+
+        class DecisionTagAction : public TagAction {
+            vector<XVariable*> list;
+        public:
+            DecisionTagAction(XMLParser* parser, string name)
+                : TagAction(parser, name) { }
+            void beginTap(const AttributeList& attributes) override;
+            void text(const UTF8String txt, bool last) override;
+            void endTag() override;
+        };
+
+
+    public:
+        XMLParser(XCSP3CoreCallbacks* cb);
+        ~XMLParser();
+
+
+        /**
+         * get the parent tag action that is n levels higher in the current
+         * branch of the XML parse tree
+         */
+        TagAction* getParentTagAction(int n = 1) {
+            if (n < 0 || n >= (int) actionStack.size())
+                return NULL;
+            
+            return actionStack[n];
+        }
+
+
+        /**
+         * callbacks from the XML parser
+         */
+        void startDocument() {
+            clearStacks();
+        }
+        void endDocument() { }
+        void startElement(UTF8String name, const AttributeList& attributes);
+        void endElement(UTF8String name);
+        void characters(UTF8String chars);
+        void handleAbridgeNotation(UTF8String chars, bool lastChunk);
+
+
+    protected:
+        void clearStacks() {
+            stateStack.clear();
+        }
+
+        /**
+         * text which is left for the next call to characters()
+         * because it may not be a complete token
+         */
+        UTF8String textLeft;
+
+        // specific actions
+        VarTagAction* varTagAction;
+
+        // DictTagAction* dictTagAction;
+        TagAction* unknownTagHandler;   // handler to help ignore all unknown tags
+
+
+    };  // clear XMLParser
+
+}   // namespace
+
+
+// Local Variables;
+// mode: C++
+// End:
+
+
+#endif  // _XMLParser_h_
