@@ -477,3 +477,212 @@ void XCSP3PrintCallbacks::buildConstraintLex(string, vector<vector<Xvariable*>>&
     }
 }
 
+// string id, vector<vector<XVariable*>>& matrix, OrderType order
+void XCSP3PrintCallbacks::buildConstraintLexMatrix(string, vector<vector<XVariable*>>& matrix, OrderType order) {
+    cout << "\n     lex matrix constraint   matrix " << endl;
+    string sep;
+
+    if (order == LT) sep = " < ";
+    if (order == LE) sep = " <= ";
+    if (order == GT) sep = " > ";
+    if (order == GE) sep = " >= ";
+
+    for (unsigned int i = 0; i < (matrix.size() < 4 ? matrix.size() : 3); i++) {
+        cout << "           ";
+        displayList(matrix[i]);
+    }
+    cout << "       Order " << sep << endl;
+}
+
+// string id, vector<XVariable*>& list, vector<int>& coeffs, XCondition& cond
+void XCSP3PrintCallbacks::buildConstraintSum(string, vector<XVariable*>& list, vector<int>& coeffs, XCondition& cond) {
+    cout << "\n         sum constraint";
+
+    if (list.size() > 8) {
+        for (int i = 0; i < 3; i++)
+            cout << (coeffs.size() == 0 ? 1 : coeffs[i]) << "*" << *(list[i]) << " ";
+        cout << " ... ";
+
+        for (unsigned int i = list.size() - 4; i < list.size(); i++)
+            cout << (coeffs.size() == 0 ? 1 : coeffs[i]) << "*" << *(list[i]) << " ";
+    } else {
+        for (unsigned int i = 0; i < list.size(); i++)
+            cout << (coeffs.size() == 0 ? 1 : coeffs[i]) << "*" << *(list[i]) << " ";
+    }
+    cout << cond << endl;
+}
+
+// string id, vector<XVariable*>& list, XCondition& cond
+void XCSP3PrintCallbacks::buildConstraintSum(string, vector<XVariable*>& list, XCondition& cond) {
+    cout << "\n         unweighted sum constraint";
+    cout << "           ";
+    displayList(list, "+");
+    cout << cond << endl;
+}
+
+// string id, vector<XVariable*>& list, vector<XVariable*>& coeffs, XCondition& cond
+void XCSP3PrintCallbacks::buildConstraintSum(string, vector<XVariable*>& list, vector<XVariable*>& coeffs, XCondition& cond) {
+    cout << "\n         scalar sum constraint";
+
+    if (list.size() > 8) {
+        for (int i = 0; i < 3; i++)
+            cout << coeffs[i]->id << "*" << *(list[i]) << " ";
+        cout << " ... ";
+        
+        for (unsigned int i = list.size() - 4; i < list.size(); i++)
+            cout << coeffs[i]->id << "*" << *(list[i]) << " ";
+    } else {
+        for (unsigned int i = 0; i < list.size(); i++)
+            cout << coeffs[i]->id << "*" << *(list[i]) << " ";
+    }
+    cout << cond << endl;
+}
+
+void XCSP3PrintCallbacks::buildConstraintSum(string id, vector<Tree*>& list, vector<int>& coeffs, XCondition& cond) {
+    std::cout << "\n        sum with expression constraint;";
+
+    if (list.size() > 8) {
+        for (int i = 0; i < 3; i++) {
+            cout << coeffs[i];
+            list[i]->prefixe();
+        }
+        cout << " ... ";
+        for (unsigned int i = list.size() - 4; i < list.size(); i++) {
+            cout << coeffs[i];
+            list[i]->prefixe();
+        }
+    } else {
+        for (unsigned int i = 0; i < list.size(); i++) {
+            cout << coeffs[i];
+            list[i]->prefixe();
+        }
+    }
+    cout << cond << endl;
+}
+
+void XCSP3PrintCallbacks::buildConstraintSum(string id, vector<Tree*>& list, XCondition& cond) {
+    if (list.size() > 8) {
+        for (int i = 0; i < 3; i++) {
+            list[i]->prefixe();
+        }
+        cout << " ... ";
+        for (unsigned int i = list.size() - 4; i < list.size(); i++) {
+            list[i]->prefixe();
+        }
+    } else {
+        for (unsigned int i = 0; i < list.size(); i++) {
+            list[i]->prefixe();
+        }
+    }
+    cout << cond << endl;
+}
+
+// string id, vector<XVariable*>& list, int value, int k
+void XCSP3PrintCallbacks::buildConstraintAtMost(string, vector<XVariable*>& list, int value, int k) {
+    cout << "\n     AtMost constraint: val=" << value << "k=" << endl;
+    cout << "           ";
+    displayList(list);
+}
+
+// string id, vector<XVariable*>& list, int value, int k
+void XCSP3PrintCallbacks::buildConstraintAtLeast(string, vector<XVariable*>& list, int value, int k) {
+    cout << "\n     Atleast constraint: val=" << value << "k=" << endl;
+    cout << "           ";
+    displayList(list);
+}
+
+// string id, vector<XVariable*>& list, int value, int k
+void XCSP3PrintCallbacks::buildConstraintExactlyK(string, vector<XVariable*>& list, int value, int k) {
+    cout << "\n     Exactly constraint: val=" << value << " k=" << k << endl;
+    cout << "           ";
+    displayList(list);
+}
+
+// string id, vector<XVariable*>& list, vector<int>& values, int k
+void XCSP3PrintCallbacks::buildConstraintAmong(string, vector<XVariable*>& list, vector<int>& values, int k) {
+    cout << "\n     Among constraint: k=" << k << endl;
+    cout << "           ";
+    displayList(list);
+    cout << "           values:";
+    displayList(values);
+}
+
+// string id, vector<XVariable*>& list, int value, XVariable* x
+void XCSP3PrintCallbacks::buildConstraintExactlyVariable(string, vector<XVariable*>& list, int value, XVariable* x) {
+    cout << "\n     Exactly Variable constraint: val=" << value << " variable=" << *x << endl;
+    cout << "           ";
+    displayList(list);
+}
+
+// string id, vector<XVariable*>& list, vector<int>& values, XCondition& xc
+void XCSP3PrintCallbacks::buildConstraintCount(string, vector<XVariable*>& list, vector<int>& values, XCondition& xc) {
+    cout << "\n     count constraint" << endl;
+    cout << "           ";
+    displayList(list);
+
+    cout << "           values: ";
+    cout << "           ";
+    displayList(values);
+
+    cout << "           condition: " << xc << endl;
+}
+
+// string id, vector<XVariable*>& list, vector<XVariable*>& values, XCondition& xc
+void XCSP3PrintCallbacks::buildConstraintCount(string, vector<XVariable*>& list, vector<XVariable*>& values, XCondition& xc) {
+    cout << "\n     count constraint" << endl;
+    cout << "           ";
+    displayList(list);
+
+    cout << "           values: ";
+    displayList(values);
+
+    cout << "           condition: " << xc << endl;
+}
+
+// string id, vector<XVariable*>& list, vector<int>& except, XCondition& xc
+void XCSP3PrintCallbacks::buildConstraintNValues(string, vector<XVariable*>& list, vector<int>& except, XCondition& xc) {
+    cout << "\n     NValues with exceptions constraint" << endl;
+    cout << "           ";
+    displayList(list);
+
+    cout << "           exceptions: ";
+    displayList(except);
+
+    cout << "           condition: " << xc << endl;
+}
+
+// string id, vector<XVariable*>* list, XCondition& xc
+void XCSP3PrintCallbacks::buildConstraintNValues(string, vector<XVariable*>& list, XCondition& xc) {
+    cout << "\n     NValues constraint" << endl;
+    cout << "           ";
+    displayList(list);
+
+    cout << "           condition:" << xc << endl;
+}
+
+// string id, vector<XVariable*>& list, vector<int> values, vector<int>& occurs, bool closed
+void XCSP3PrintCallbacks::buildConstraintCardinality(string, vector<XVariable*>& list, vector<int> values, vector<int>& occurs, bool closed) {
+    cout << "\n     Cardinality constraint (int values, int occurs) constraint closed: " << closed << endl;
+    cout << "           ";
+    displayList(list);
+
+    cout << "           values:";
+    displayList(values);
+
+    cout << "           occurs:";
+    displayList(occurs);
+}
+
+// string id, vector<XVariable*>& list, vector<int> values, vector<XVariable*>& occurs, bool closed
+void XCSP3PrintCallbacks::buildConstraintCardinality(string, vector<XVariable*>& list, vector<int> values, vector<XVariable*>& occurs, bool closed) {
+    cout << "\n     Cardinality constraint (int values, var occurs) constraint closed: " << closed << endl;
+    cout << "           ";
+    displayList(list);
+
+    cout << "           values:";
+    displayList(values);
+
+    cout << "           occurs:";
+    displayList(occurs);
+}
+
