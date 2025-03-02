@@ -174,3 +174,130 @@ namespace XCSP3Core {
 }
 
 
+using namespace XCSP3Core;
+
+
+XCSP3PrintCallbacks::XCSP3PrintCallbacks() : XCSP3CoreCallbacks(), canonize(true) {}
+
+
+template<class T>
+void displayList(vector<T>& list, string separator = " ") {
+    if (list.size() > 8) {
+        for (int i = 0; i < 3; i++)
+            cout << list[i] << separator;
+        cout << " ... ";
+        for (unsigned int i = list.size() - 4; i < list.size(); i++)
+            cout << list[i] << separator;
+        cout << endl;
+        return;
+    }
+
+    for (unsigned int i = 0; i < list.size(); i++)
+        cout << list[i] << separator;
+    cout << endl;
+}
+
+
+void displayList(vector<XVariable*>& list, string separator = " ") {
+    if (list.size() > 8) {
+        for (int i = 0; i < 3; i++)
+            cout << list[i]->id << separator;
+        cout << " ... ";
+        for (unsigned int i = list.size() - 4; i < list.size(); i++)
+            cout << list[i]->id << separator;
+        cout << endl;
+        return;
+    }
+
+    for (unsigned int i = 0; i < list.size(); i++)
+        cout << list[i]->id << separator;
+    cout << endl;
+}
+
+
+void XCSP3PrintCallbacks::beginInstance(InstanceType type) {
+    cout << "Start Instance - tpye=" << type << endl;
+}
+
+void XCSP3PrintCallbacks::endInstance() {
+    cout << "End SAX parsing " << endl;
+}
+
+void XCSP3PrintCallbacks::beginVariables() {
+    cout << " start variables declaration" << endl;
+}
+
+void XCSP3PrintCallbacks::endVariables() {
+    cout << " end variables declaration" << endl << endl;
+}
+
+void XCSP3PrintCallbacks::beginVariableArray(string id) {
+    cout << "       array: " << id << endl;
+}
+
+void XCSP3PrintCallbacks::endVariableArray() {
+
+}
+
+void XCSP3PrintCallbacks::beginConstraints() {
+    cout << " start constraints declaration" << endl;
+}
+
+void XCSP3PrintCallbacks::endConstraints() {
+    cout << "\n end constraints declaration" << endl << endl;
+}
+
+void XCSP3PrintCallbacks::beginGroup(string id) {
+    cout << "   start group of constraint " << id << endl;
+}
+
+void XCSP3PrintCallbacks::endGroup() {
+    cout << "   end group of constraint" << endl;
+}
+
+void XCSP3PrintCallbacks::beginBlock(string classes) {
+    cout << "   start block of constraint classes = " << classes << endl;
+}
+
+void XCSP3PrintCallbacks::endBlock() {
+    cout << "   end block of constraint" << endl;
+}
+
+
+// string id, bool circular
+void XCSP3PrintCallbacks::beginSlide(string id, bool) {
+    cout << "   start slide" << id << endl;
+}
+
+void XCSP3PrintCallbacks::endSlide() {
+    cout << "   end slide" << endl;
+}
+
+void XCSP3PrintCallbacks::beginObjectives() {
+    cout << "   start Objective " << endl;
+}
+
+void XCSP3PrintCallbacks::endObjectives() {
+    cout << "   end Objective " << endl;
+}
+
+void XCSP3PrintCallbacks::beginAnnotations() {
+    cout << "   begin Annotations " << endl;
+}
+
+void XCSP3PrintCallbacks::endAnnotations() {
+    cout << "   end Annotations " << endl;
+}
+
+
+
+void XCSP3PrintCallbacks::buildVariableInteger(string id, int minValue, int maxValue) {
+    cout << "   var " << id << " : " << minValue << "..." << maxValue << endl;
+}
+
+void XCSP3PrintCallbacks::buildVariableInteger(string id, vector<int>& values) {
+    cout << "   var " << id << " : ";
+    cout << "       ";
+    displayList(values);
+}
+
