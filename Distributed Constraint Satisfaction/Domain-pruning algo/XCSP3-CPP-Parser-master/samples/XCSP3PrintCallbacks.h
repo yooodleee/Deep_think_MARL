@@ -301,3 +301,179 @@ void XCSP3PrintCallbacks::buildVariableInteger(string id, vector<int>& values) {
     displayList(values);
 }
 
+void XCSP3PrintCallbacks::buildConstraintExtension(string id, vector<XVariable*> list, vector<vector<int>>& tuples, bool support, bool hasStar) {
+    cout << "\n     extension constraint : " << id << endl;
+    cout << "           " << (support ? "support" : "conflict") << " arity: " << list.size() << " nb tuples: " << tuples.size() << " star: " << hasStar << endl;
+    cout << "           ";
+    displayList(list);
+}
+
+void XCSP3PrintCallbacks::buildConstraintExtension(string id, XVariable* variable, vector<int>& tuples, bool support, bool hasStar) {
+    cout << "\n     extension constraint with one variable: " << id << endl;
+    cout << "           " << (*variable) << " " << (support ? "support" : "conflict") << " nb tuples: " << tuples.size() << " star: " << hasStar << endl;
+    cout << endl;
+}
+
+// string id, vector<XVariable*> list, bool support, bool hasStar
+void XCSP3PrintCallbacks::buildConstraintExtensionAs(string id, vector<XVariable*>, bool, bool) {
+    cout << "\n     extension constraint similar as previous one: " << id << endl;
+}
+
+void XCSP3PrintCallbacks::buildConstraintIntension(string id, string expr) {
+    cout << "\n     intension constraint (using string) : " << id << " : " << expr << endl;
+}
+
+void XCSP3PrintCallbacks::buildConstraintIntension(string id, Tree* tree) {
+    cout << "\n     intension constraint using canonized tree: " << id << " : ";
+    tree->prefixe();
+    std::cout << "\n";
+}
+
+void XCSP3PrintCallbacks::buildConstraintPrimitive(string id, OrderType, XVariable* x, int k, XVariable* y) {
+    cout << "\n     intension constraint " << id << " : " << x->id << (k >= 0 ? "+" : "") << k << " op " << y->id << endl;
+}
+
+void XCSP3PrintCallbacks::buildConstraintPrimitive(string id, OrderType op, XVariable* x, int k) {
+    cout << "\n     constraint " << " : " << x->id << " op " << k << "\n";
+}
+
+void XCSP3PrintCallbacks::buildConstraintPrimitive(string id, XVariable* x, bool in, int min, int max) {
+    cout << "\n     constraint " << id << " : " << x->id << (in ? " in " : " not in ") << min << ".." << max << "\n";
+}
+
+// string id, vector<XVariable*>& list, string start, vector<string>& final, vector<XTransition>& transitions
+void XCSP3PrintCallbacks::buildConstraintRegular(string, vector<XVariable*>& list, string start, vector<string>& final, vector<XTransition>& transitions) {
+    cout << "\n     regular constraint" << endl;
+    cout << "           ";
+    displayList(list);
+    cout << "           start: " << start << endl;
+    cout << "           final: ";
+    displayList(final, ",");
+    cout << endl;
+    cout << "           transitions: ";
+    
+    for (unsigned int i = 0; i < (transitions.size() > 4 ? 4 : transitions.size()); i++) {
+        cout << "(" << transitions[i].from << "," << transitions[i].val << "," << transitions[i].to << ") ";
+    }
+
+    if (transitions.size() > 4) cout << "...";
+    cout << endl;
+}
+
+// string id, vector<XVariable*>& list, vector<XTransition>& transitions
+void XCSP3PrintCallbacks::buildConstraintMDD(string, vector<XVariable*>& list, vector<XTransition>& transitions) {
+    cout << "\n     mdd constraint" << endl;
+    cout << "           ";
+    displayList(list);
+    cout << "           transitions: ";
+    
+    for (unsigned int i = 0; i < (transitions.size() > 4 ? 4 : transitions.size()); i++) {
+        cout << "(" << transitions[i].from << "," << transitions[i].val << "," << transitions[i].to << ")";
+    }
+
+    if (transitions.size() > 4) cout << "...";
+    cout << endl;
+}
+
+void XCSP3PrintCallbacks::buildConstraintAlldifferent(string id, vector<XVariable*>& list) {
+    cout << "\n     allDiff constraint" << id << endl;
+    cout << "           ";
+    displayList(list);
+}
+
+void XCSP3PrintCallbacks::buildConstraintAlldifferentExcept(string id, vector<XVariable*>& list, vector<int>& except) {
+    cout << "\n     allDiff constraint with exceptions" << id << endl;
+    cout << "           ";
+    displayList(list);
+    cout << "           Exceptions:";
+    displayList(except);
+}
+
+void XCSP3PrintCallbacks::buildConstraintAlldifferent(string id, vector<Tree*>& list) {
+    cout << "\n     allDiff constraint with expressions" << id << endl;
+    cout << "           ";
+
+    for (Tree* t : list) {
+        t->prefixe();
+        std::cout << " ";
+    }
+    std::cout << std::endl;
+}
+
+void XCSP3PrintCallbacks::buildConstraintAlldifferentList(string id, vector<vector<XVariable*>>& lists) {
+    cout << "\n     allDiff list constraint" << id << endl;
+    
+    for (unsigned int i = 0; i < (lists.size() < 4 ? lists.size() : 3); i++) {
+        cout << "           ";
+        displayList(lists[i]);
+    }
+}
+
+void XCSP3PrintCallbacks::buildConstraintAlldifferentMatrix(string id, vector<vector<XVariable*>>& matrix) {
+    cout << "\n     allDiff matrix constraint" << id << endl;
+    
+    for (unsigned int i = 0; i < matrix.size(); i++) {
+        cout << "           ";
+        displayList(matrix[i]);
+    }
+}
+
+void XCSP3PrintCallbacks::buildConstraintAllEqual(string id, vector<XVariable*>& list) {
+    cout << "\n     allEqual constraint" << id << endl;
+    cout << "           ";
+    displayList(list);
+}
+
+void XCSP3PrintCallbacks::buildConstraintNotAllEqual(string id, vector<XVariable*>& list) {
+    cout << "\n     not allEqual constraint" << id << endl;
+    cout << "           ";
+    displayList(list);
+}
+
+// string id, vector<XVariable*>& list, OrderType order
+void XCSP3PrintCallbacks::buildConstraintOrdered(string, vector<XVariable*>& list, OrderType order) {
+    cout << "\n     ordered constraint" << endl;
+    string sep;
+
+    if (order == LT) sep = " < ";
+    if (order == LE) sep = " <= ";
+    if (order == GT) sep = " > ";
+    if (order == GE) sep = " >= ";
+    cout << "           ";
+    displayList(list, sep);
+}
+
+// string id, vector<XVariable*>& list, vector<int>& lengths, OrderType order
+void XCSP3PrintCallbacks::buildConstraintOrdered(string, vector<XVariable*>& list, vector<int>& lengths, OrderType order) {
+    cout << "\n     ordered constraint with lengths" << endl;
+    string sep;
+
+    if (order == LT) sep = " < ";
+    if (order == LE) sep = " <= ";
+    if (order == GT) sep = " > ";
+    if (order == GE) sep = " >= ";
+    cout << "           ";
+    
+    displayList(lengths);
+    cout << "           ";
+    displayList(list, sep);
+}
+
+// string id, vector<vector<XVariable*>>& lists, OrderType order
+void XCSP3PrintCallbacks::buildConstraintLex(string, vector<vector<Xvariable*>>& lists, OrderType order) {
+    cout << "\n     lex constraint      nb lists: " << lists.size() << endl;
+    string sep;
+
+    if (order == LT) sep = " < ";
+    if (order == LE) sep = " <= ";
+    if (order == GT) sep = " > ";
+    if (order == GE) sep = " >= ";
+    cout << "           operator: " << sep << endl;
+
+    for (unsigned int i = 0; i < lists.size(); i++) {
+        cout << "           list " << i << ": ";
+        cout << "           ";
+        displayList(lists[i], " ");
+    }
+}
+
