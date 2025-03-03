@@ -61,7 +61,7 @@ namespace XCSP3Core {
     ****************************************************************/
     class XConstraintGroup : public XConstraint {
     public:
-        XConstraint *Constraint;                    // A Constraint group contains a constraint
+        XConstraint *constraint;                    // A Constraint group contains a constraint
         vector<vector<XVariable*>> arguments;       // The list of all args
         ConstraintType type;                        // Use it to discover the type of constraint... and perform cast
         map<string, XVariable*> toArguments;
@@ -129,7 +129,7 @@ namespace XCSP3Core {
     };
 
 
-    class XLength {
+    class XLengths {
     public:
         vector<XVariable*> lengths;
 
@@ -234,7 +234,7 @@ namespace XCSP3Core {
 
         XConstraintAllDiffMatrix(std::string idd, std::string c, vector<vector<XVariable*>>& mat) : XConstraint(idd, c) {
             matrix.resize(mat.size());
-            for (unsigned int i = 0; i < max.size(); i++)
+            for (unsigned int i = 0; i < mat.size(); i++)
                 matrix[i].assign(mat[i].begin(), mat[i].end());
         }
 
@@ -252,7 +252,7 @@ namespace XCSP3Core {
     static OrderType _op;
 
 
-    class XConstraintOrdered : public XConstraint, public XLength {
+    class XConstraintOrdered : public XConstraint, public XLengths {
     public:
         OrderType& op;
 
@@ -405,7 +405,7 @@ namespace XCSP3Core {
      * constraint noOverlap
      ***************************************************************/
 
-    class XConstraintNoOverlap : public XConstraint, public XLength {
+    class XConstraintNoOverlap : public XConstraint, public XLengths {
     public:
         // Be careful origins is the vector list!!!
         vector<XVariable*>& origins;
@@ -421,7 +421,7 @@ namespace XCSP3Core {
      * constraint Cumulative
      ***************************************************************/
 
-    class XConstraintCumulative : public XConstraint, public XLength, public XInitialCondition {
+    class XConstraintCumulative : public XConstraint, public XLengths, public XInitialCondition {
     public:
         // Be carefull origin is the vector list!!!
         vector<XVariable*>& origins;
