@@ -78,7 +78,7 @@ namespace XCSP3Core {
 
             const Byte *getPointer() const;
 
-            Byte fistByte() const;
+            Byte firstByte() const;
 
             inline bool isWhiteSpace() const {
                 return *p < 128 && (*p == ' ' || *p == '\n' || *p == '\r' || *p == '\t'
