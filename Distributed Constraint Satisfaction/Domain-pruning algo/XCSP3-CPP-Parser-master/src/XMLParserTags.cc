@@ -364,3 +364,167 @@ void XMLParser::BasicConstraintTagAction::beginTag(const AttributeList &attribut
 
 
 
+/********************************************************************
+ * Actions performed on EXTENSION tag
+ *******************************************************************/
+
+
+void XMLParser::ExtensionTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintExtension(this->id, this->parser->classes);
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = EXTENSION;
+    }
+
+}
+
+
+void XMLParser::ExtensionTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    constraint->containStar = this->parser->star;
+
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintExtension(constraint);
+        delete constraint;
+    }
+}
+
+
+void XMLParser::IntensionTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintIntension(this->id, this->parser->classes);
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = INTENSION;
+    }
+    fnc.clear();
+
+}
+
+
+
+// UTF8String txt, bool last
+void XMLParser::IntensionTagAction::text(const UTF8String txt, bool)
+{
+    fnc.append(txt);
+}
+
+
+void XMLParser::IntensionTagAction::endTag()
+{
+    fnc.to(constraint->function);
+    constraint->function = trim(constraint->function);
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintIntension(constraint);
+        delete constraint;
+    }
+
+}
+
+
+
+/********************************************************************
+ ********************************************************************
+ *                  CONSTRAINTS DEFINED ON LANGUAGES
+ ********************************************************************
+ *******************************************************************/
+
+/********************************************************************
+ * Actions performed on REGULAR tag
+ *******************************************************************/
+
+
+void XMLParser::RegularTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintRegular(this->id, this->parser->classes);
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = REGULAR;
+    }
+
+}
+
+
+void XMLParser::RegularTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin, this->parser->lists[0].end());
+    constraint->start = this->parser->start;
+    constraint->final.clear();
+    split(this->parser->final, ' ', constraint->final);
+    constraint->transitions.assign(this->parser->transitions.begin(), this->parser->transitions.end());
+
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintRegular(constraint);
+        delete constraint;
+    }
+
+}
+
+
+
+/********************************************************************
+ * Actions performed on MDD tag
+ *******************************************************************/
+
+
+void XMLParser::MDDTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintMDD(this->id, this->parser->classes);
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = MDD:
+    }
+
+}
+
+
+void XMLParser::MDDTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    constraint->transitions.clear();
+    for(unsigned int i = 0; i < this->parser->transitions.size(); i++)
+    {
+        XTransition &xt = this->parser->transitions[i];
+        constraint->transitions.push_back(XTransition(xt.from, xt.val, xt.to));
+    }
+
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintMDD(constraint);
+        delete constraint;
+    }
+
+}
+
+
+
