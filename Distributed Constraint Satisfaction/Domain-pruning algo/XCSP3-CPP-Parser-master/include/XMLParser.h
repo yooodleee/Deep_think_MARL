@@ -317,7 +317,7 @@ namespace XCSP3Core {
         /************************************************************
          * Actions performed on CONSTRAINTS tag
          ***********************************************************/
-        class COnstraintsTagAction : public TagAction {
+        class ConstraintsTagAction : public TagAction {
         public:
             COnstraintsTagAction(XMLParser* parser, string name) : TagAction(parser, name) { }
 
