@@ -121,3 +121,246 @@ void XMLParser::VarTagAction::beginTag(const AttributeList &attributes)
         this->parser->allDomains.push_back(domain);
     }
 }
+
+
+// UTF8String txt, bool last
+void XMLParser::VarTagAction::text(const UTF8String txt, bool)
+{
+    if((variable != NULL || variableArray != NULL) && !txt.isWhiteSpace())
+        throw runtime_error("<var> with attribute 'as' must not have domain declaration");
+    this->parser->parseDomain(txt, *domain);
+}
+
+
+void XMLParser::VarTagAction::endTag()
+{
+    if(variableArray != NULL)
+    {
+        // Simuate an array
+        this->parser->manager->beginVariableArray(variableArray->id);
+        this->parser->variablesList[variableArray->id] = variableArray;
+        for(XVariable *x : variableArray->variables)
+            this->parser->variablesList[x->id] = x;
+        this->parser->manager->buildVariableArray(variableArray);
+        this->parser->manager->endVariableArray();
+        return;
+    }
+    if(variable == NULL)
+        variable = new XVariable(id, domain);
+    variable->classes = classes;
+    this->parser->variablesList[variable->id] = variable;
+    this->parser->manager->buildVariable(variable);
+
+}
+
+
+
+/********************************************************************
+ * Actions performed on ARRAY tag
+ *******************************************************************/
+
+
+void XMLParser::ArrayTagAction::beginTag(const AttributeList &attributes)
+{
+    string type, as, lid, size;
+
+    this->checkParentTag("variables");
+    varArray = NULL;
+    domain = NULL;
+    sizes.clear();
+
+    if(!attributes["id"].to(lid))
+        throw runtime_error("expected attribute id for tag <array>");
+    id = lid;
+
+    if(!attributes["class"].isNull())
+        attributes["class"].to(classes);
+    else
+        classes = "";
+    
+    if(!attributes["type"].isNull())
+    {
+        attributes["type"].to(type);
+        if(type != "integer")
+            throw runtime_error("XCSP3Core expected type=\"integer\" for tag <var>");
+    }
+
+
+    if(!attributes["as"].isNull())
+    {
+        // Create a similar Variable
+        attributes["as"].to(as);
+        if(this->parser->variablesList[as] == nullptr)
+            throw runtime_error("Matrix variable as \"" + "\" does not exist");
+        XVariableArray *similar = (XVariableArray *)
+            this->parser->variablesList[as];
+        varArray = new XVariableArray(id, similar);
+    }
+    else
+    {
+        if(!attributes["size"].to(size))
+            throw runtime_error("expected attribute id for tag <array>");
+        vector<std::string> stringSizes = split(size, '[');
+        for(unsigned int i = 0; i < stringSizes.size(); i++)
+        {
+            if(stringSizes[i].size() == 0)
+                continue;
+            sizes.push_back(std::stoi(stringSizes[i].substr(0, stringSizes[i].size() - 1)));
+        }
+        varArray = new XVariableArray(id, sizes);
+
+        domain = new XDomainInteger();
+        this->parser->allDomains.push_back(domain);
+        this->parser->manager->beginVariableArray(id);
+    }
+
+    varArray->classes = classes;
+}
+
+
+void XMLParser::ArrayTagAction::endTag()
+{
+    // If domain is null -> as variable // Possible empty variables
+    if(domain != nullptr && domain->nbValues() != 0)
+        varArray->buildVarsWith(domain);
+    this->parser->variablesList[varArray->id] = varArray;
+    for(XVariable *x : varArray->variables)
+    {
+        if(x == nullptr)    // Undefined variable
+            continue;
+        this->parser->variablesList[x->id] = x;
+    }
+    this->parser->manager->buildVariableArray(varArray);
+    this->parser->manager->endVariableArray();
+}
+
+
+void XMLParser::DomainTagAction::beginTag(const AttributeList &attributes)
+{
+    this->checkParentTag("array");
+    attributes["for"].to(forAttr);
+    if(forAttr == "others")
+        d = ((XMLParser::ArrayTagAction *) this->parser->getParentTagAction())->domain;
+    else
+    {
+        d = new XDomainInteger();
+        this->parser->allDomains.push_back(d);
+    }
+}
+
+
+
+// UTF8String txt, bool last
+void XMLParser::DomainTagAction::text(const UTF8String txt, bool)
+{
+    this->parser->parseDomain(txt, *d);
+}
+
+
+void XMLParser::DomainTagAction::endTag()
+{
+    if(forAttr == "others")
+        return;
+    
+    string name;
+    vector<string> allCompactForms;
+    vector<XVariable *> vars;
+    XVariableArray *varArray = ((XMLParser::ArrayTagAction *) this->parser->getParentTagAction())->varArray;
+
+    split(forAttr, ' ', allCompactForms);
+    for(unsigned int i = 0; i < allCompactForms.size(); i++)
+    {
+        int pos = allCompactForms[i].find('[');
+        name = allCompactForms[i].substr(0, pos);
+        string compactForm = allCompactForms[i].substr(pos);
+        
+        vector<int> flatIndexes;
+        vector<int> indexes;
+        varArray->getVarFor(vars, compactForm, &flatIndexes, true);
+        for(unsigned int j = 0; j < flatIndexes.size(); j++)
+        {
+            varArray->indexesFor(flatIndexes[j], indexes);
+            varArray->variables[flatIndexes[j]] = new XVariable(varArray->id, d, indexes);
+            this->parser->toFree.push_back(varArray->variables[flatIndexes[j]]);
+        }
+    }
+}
+
+
+void XMLParser::BasicConstraintTagAction::beginTag(const AttributeList &attributes)
+{
+    group = NULL;
+    this->parser->star = false;
+
+    // Classic group
+    if(strcmp(this->parser->getParentTagAction()->getTagName(), "group") == 0)
+        group = ((XMLParser::GroupTagAction *) this->parser->getParentTagAction())->group;
+    
+    // Group with meta constraint not or block
+    if(strcmp(this->parser->getParentTagAction(2)->getTagName(), "group") == 0)
+    {
+        group = ((XMLParser::GroupTagAction *) this->parser->getParentTagAction(2))->group;
+        exit(1);
+    }
+
+    // Group with not and block
+    if(this->parser->getParentTagAction(3) != NULL &&
+       strcmp(this->parser->getParentTagAction(3)->getTagName(), "group") == 0)
+
+       group = ((XMLParser::GroupTagAction *) this->parser->getParentTagAction(3))->group;
+    
+
+    // Slide constraint (special cases of group without args)
+    if(strcmp(this->parser->getParentTagAction()->getTagName(), "slide") == 0)
+        group = ((XMLParser::SlideTagAction *) this->parser->getParentTagAction())->group;
+
+    // Group with meta constraint not or block
+    if(strcmp(this->parser->getParentTagAction(2)->getTagName(), "slide") == 0)
+    {
+        group = ((XMLParser::SlideTagAction *) this->parser->getParentTagAction(2))->group;
+        exit(1);
+    }
+
+    // Group with not and block
+    if(this->parser->getParentTagAction(3) != NULL &&
+       strcmp(this->parser->getParentTagAction(3)->getTagName(), "slide") == 0)
+
+       group = ((XMLParser::SlideTagAction *) this->parser->getParentTagAction(3))->group;
+    
+
+    attributes["id"].to(id);
+
+    if(!attributes["class"].isNull())
+        attributes["class"].to(this->parser->classes);
+    else
+        this->parser->classes = "";
+    
+
+    this->parser->listTag->nbCallsToList = 0;
+    this->parser->lists.clear();
+    this->parser->lists.push_back(vector<XVariable *>());
+    this->parser->matrix.clear();
+    this->parser->patterns.clear();
+
+
+    this->parser->integers.clear();
+    this->parser->values.clear();
+    this->parser->widths.clear();
+    this->parser->lengths.clear();
+    this->parser->origins.clear();
+    this->parser->transitions.clear();
+    this->parser->nbParameters = 0;
+    this->parser->occurs.clear();
+
+
+    this->parser->star = false;
+    this->parser->zeroIgnored = false;
+    this->parser->condition = "";
+    this->parser->rank = ANY;
+    this->parser->index = NULL;
+    this->parser->closed = true;
+
+}
+
+
+
