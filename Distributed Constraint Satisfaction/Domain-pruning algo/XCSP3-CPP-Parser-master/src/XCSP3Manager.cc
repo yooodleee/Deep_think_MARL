@@ -177,3 +177,193 @@ class PrimitiveUnary4 : public XCSP3Core::PrimitivePattern
 };
 
 
+class PrimitiveBinary1 : public XCSP3Core::PrimitivePattern
+{
+    // x <op> y
+    public:
+        PrimitiveBinary1(XCSP3Manager &m) : PrimitivePattern(m, "eq(x,y)")
+        {
+            pattern.root->type = OFAKEOP;
+        }
+
+        bool post() override
+        {
+            if(operators.size() != 1 || isRelationalOperator(operators[0]) == false)
+                return false;
+            manager.callback->buildConstraintPrimitive(id, expressionTypeToOrderType(operators[0]),
+                                                        (XVariable *) manager.mapping[variables[0]], 0,
+                                                        (XVariable *) manager.mapping[variables[1]]);
+            
+            return true;
+        }
+};
+
+
+class PrimitiveBinary2 : public XCSP3Core::PrimitivePattern
+{
+    // x + 3 <op> y
+    public:
+        PrimitiveBinary2(XCSP3Manager &m) : PrimitivePattern(m, "eq(add(x,3),y)")
+        {
+            pattern.root->type = OFAKEOP;   // don't care between logical operator
+        }
+
+        bool post() override
+        {
+            if(operators.size() != 1 || isRelationalOperator(operators[0]) == false)
+                manager.callback->buildConstraintPrimitive(id, expressionTypeToOrderType(operators[0]),
+                                                            (XVariable *) manager.mapping[variables[0]], 
+                                                            constants[0], (XVariable *) manager.mapping[variables[1]]);
+
+            return true;                                                
+        }
+};
+
+
+class PrimitiveBinary3 : public XCSP3Core::PrimitivePattern
+{
+    // x = y <op> 3
+    public:
+        PrimitiveBinary3(XCSP3Manager &m) : PrimitivePattern(m, "eq(y,add(x,3))")
+        {
+            pattern.root->type = OFAKEOP;   // don't care between logical operator
+        }
+
+        bool post() override
+        {
+            if(operators.size() != 1 || isRelationalOperator(operators[0]) == false)
+                return false;
+            constants[0] = -constants[0];
+            manager.callback->buildConstraintPrimitive(id, expressionTypeToOrderType(operators[0]),
+                                                        (XVariable *) manager.mapping[variables[0]],
+                                                        constants[0], (XVariable *) manager.mapping[variables[1]]);
+
+            return true;                                            
+        }
+};
+
+
+class PrimitiveTernary1 : public XCSP3Core::PrimitivePattern
+{
+    // x = y <op> 3
+    public:
+        PrimitiveTernary1(XCSP3Manager &m) : PrimitivePattern(m, "eq(add(y,z),x)")
+        {
+            pattern.root->type = OFAKEOP;   // don't care between logical operator
+        }
+
+        bool post() override
+        {
+            if(operators.size() != 1 || isRelationalOperator(operators[0]) == false)
+                return false;
+            std::vector<XVariable *> list;
+            for(string &s : variables)
+                list.push_back((XVariable *) manager.mapping[s]);
+
+            vector<int> coefs;
+            coefs.push_back(1);
+            coefs.push_back(1);
+            coefs.push_back(-1);
+
+            XCondition cond;
+            cond.operandType = INTEGER;
+            cond.op = expressionTypeToOrderType(operators[0]);
+            cond.val = 0;
+
+            manager.callback->buildConstraintSum(id, list, coefs, cond);
+            return true;
+        }
+};
+
+
+bool XCSP3Manager::recognizePrimitives(std::string id, Tree *tree)
+{
+    for(PrimitivePattern *p : patterns)
+        if(p->seeTarget(id, tree)->match())
+            return true;
+        
+        return false;
+}
+
+
+void XCSP3Manager::createPrimitivePatterns()
+{
+    patterns.push_back(new PrimitiveUnary1(*this));
+    patterns.push_back(new PrimitiveUnary2(*this));
+    patterns.push_back(new PrimitiveUnary3(*this));
+    patterns.push_back(new PrimitiveUnary4(*this));
+    patterns.push_back(new PrimitiveBinary1(*this));
+    patterns.push_back(new PrimitiveBinary2(*this));
+    patterns.push_back(new PrimitiveBinary3(*this));
+    patterns.push_back(new PrimitiveTernary1(*this));
+}
+
+
+void XCSP3Manager::destroyPrimitivePatterns()
+{
+    for(PrimitivePattern *p : patterns)
+        delete p;
+}
+
+
+void XCSP3Manager::buildVariable(XVariable *variable)
+{
+    if(discardedClasses(variable->classes))
+        return;
+    
+    if(variable->domain->values.size() == 1)
+    {
+        callback->buildVariableInteger(variable->id, variable->domain->values[0]->minimum(),
+                                       variable->domain->values[0]->maximum());
+        
+        return;
+    }
+    std::vector<int> values;
+
+    for(unsigned int i = 0; i < variable->domain->values.size(); i++)
+    {
+        for(int j = variable->domain->values[i]->minimum();
+            j <= variable->domain->values[i]->maximum(); j++)
+        {
+            values.push_back(j);
+        }
+    }
+    callback->buildVariableInteger(variable->id, values);
+}
+
+
+void XCSP3Manager::buildVariableArray(XVariableArray *variable)
+{
+    if(discardedClasses(variable->classes))
+        return;
+    
+    for(XVariable *v : variable->variables)
+        if(v != nullptr)
+            buildVariable(v);
+}
+
+
+// ##################################################################
+// Basic constraints
+// ##################################################################
+
+
+void XCSP3Manager::newConstraintExtension(XConstraintExtension *constraint)
+{
+    if(discardedClasses(constraint->classes))
+        return;
+    
+    if(constraint->list.size() == 1)
+    {
+        std::vector<int> tuples;
+        for(vector<int> &tpl : constraint->tuples)
+            tuples.push_back(tpl[0]);
+        callback->buildConstraintExtension(constraint->id, constraint->list[0], tuples,
+                                           constraint->isSupport, constraint->containStar);
+    }
+    else
+        callback->buildConstraintExtension(constraint->id, constraint->list, constraint->tuples,
+                                           constraint->isSupport, constraint->containStar);
+}
+
+
