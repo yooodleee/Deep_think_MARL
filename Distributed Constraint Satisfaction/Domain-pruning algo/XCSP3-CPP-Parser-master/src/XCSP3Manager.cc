@@ -1015,3 +1015,301 @@ void XCSP3Manager::newConstraintNoOverlap(XConstraintNoOverlap *constraint)
 }
 
 
+void XCSP3Manager::newConstraintNoOverlapKDim(XConstraintNoOverlap *constraint)
+{
+    if(discardedClasses(constraint->classes))
+        return;
+    
+    int v;
+    bool isInt = false;
+    vector<vector<int>> intLengths;
+    vector<vector<XVariable *>> varLengths;
+    vector<vector<XVariable *>> origins;
+    
+    for(XEntity *xe : constraint->lengths)
+    {
+        if(xe == NULL)
+        {
+            varLengths.push_back(vector<XVariable *>());
+            intLengths.push_back(vector<int>());
+            continue;
+        }
+        if(isInteger(xe, v))
+        {
+            intLengths.back().push_back(v);
+            isInt = true;
+        }
+        else
+        {
+            XVariable *xv = (XVariable *) xe;
+            varLengths.back().push_back(xv);
+        }
+    }
+    for(XVariable *xe : constraint->origins)
+    {
+        if(xe == NULL)
+        {
+            origins.push_back(vector<XVariable *>());
+            continue;
+        }
+        origins.back().push_back(xe);
+    }
+
+    if(isInt > 0)
+        callback->buildConstraintNoOverlap(constraint->id, origins,
+                                           intLengths, constraint->zeroIgnored);
+    else
+        callback->buildConstraintNoOverlap(constraint->id, origins, constraint->zeroIgnored);
+}
+
+
+void XCSP3Manager::newConstraintCumulative(XConstraintCumulative *constraint)
+{
+    if(discardedClasses(constraint->classes))
+        return;
+    int v;
+    vector<int> intLengths;
+    vector<XVariable *> varLengths;
+
+    for(XEntity *xe : constraint->lengths)
+    {
+        if(isInteger(xe, v))
+            intLengths.push_back(v);
+        else
+        {
+            XVariable *xv = (XVariable *) xe;
+            varLengths.push_back(xv);
+        }
+    }
+
+    vector<int> intHeights;
+    vector<XVariable *> varHeights;
+
+    for(XEntity *xe : constraint->heights)
+    {
+        if(isInteger(xe, v))
+            intHeights.push_back(v);
+        else
+        {
+            XVariable *xv = (XVariable *) xe;
+            varHeights.push_back(xv);
+        }
+    }
+    XCondition xc;
+    constraint->extractCondition(xc);
+
+    if(constraint->ends.size() == 0)
+    {
+        if(intLengths.size() > 0 && intHeights.size() > 0)
+            callback->buildConstraintCumulative(constraint->id, constraint->origins, intLengths, intHeights, xc);
+        if(intLengths.size() > 0 && varHeights.size() > 0)
+            callback->buildConstraintCumulative(constraint->id, constraint->origins, intLengths, varHeights, xc);
+        if(varLengths.size() > 0 && intHeights.size() > 0)
+            callback->buildConstraintCumulative(constraint->id, constraint->origins, varLengths, intHeights, xc);
+        if(varLengths.size() > 0 && varHeights.size() > 0)
+            callback->buildConstraintCumulative(constraint->id, constraint->origins, varLengths, varHeights, xc);
+        return;
+    }    
+    if(intLengths.size() > 0 && intHeights.size() > 0)
+        callback->buildConstraintCumulative(constraint->id, constraint->origins, intLengths, intHeights, constraint->ends, xc);
+    if(intLengths.size() > 0 && varHeights.size() > 0)
+        callback->buildConstraintCumulative(constraint->id, constraint->origins, intLengths, varHeights, constraint->ends, xc);
+    if(varLengths.size() > 0 && intHeights.size() > 0)
+        callback->buildConstraintCumulative(constraint->id, constraint->origins, varLengths, intHeights, constraint->ends, xc);
+    if(varLengths.size() > 0 && varHeights.size() > 0) 
+        callback->buildCOnstraintCumulative(constraint->id, constraint->origins, varLengths, varHeights, constraint->ends, xc);
+}
+
+
+// ##################################################################
+// Instantiation constraint
+// ##################################################################
+
+
+void XCSP3Manager::newConstraintInstantiation(XConstraintInstantiation *constraint)
+{
+    if(discardedClasses(constraint->classes))
+        return;
+    callback->buildConstraintInstantiation(constraint->id, constraint->list, constraint->values);
+}
+
+
+// ##################################################################
+// Graph constraints
+// ##################################################################
+
+
+void XCSP3Manager::newConstraintCircuit(XConstraintCircuit *constraint)
+{
+    if(discardedClasses(constraint->classes))
+        return;
+    
+    if(constraint->value == nullptr)
+        callback->buildConstraintCircuit(constraint->id, constraint->list, constraint->startIndex);
+    else
+    {
+        int value;
+        if(isInteger(constraint->value, value))
+            callback->buildConstraintCircuit(constraint->id, constraint->list, constraint->startIndex, value);
+        else
+            callback->buildConstraintCircuit(constraint->id, constraint->list, constraint->startIndex, (XVariable *) constraint->value);
+    }
+}
+
+
+// ##################################################################
+// Group constraints
+// ##################################################################
+
+
+template<class T>
+void XCSP3Manager::unfoldConstraint(XConstraintGroup *group, int i, void (XCSP3Manager::*newConstraint)(T *))
+{
+    T *constraint = new T(group->constraint->id, group->constraint->classes);
+    group->unfoldArgumentNumber(i, constraint);
+    (this->*newConstraint)(constraint);
+    delete constraint;
+}
+
+
+void XCSP3Manager::newConstraintGroup(XConstraintGroup *group)
+{
+    if(discardedClasses(group->classes))
+        return;
+    
+    vector<XVariable *> previousArguments;  // used to check if extension args have same domains
+    for(unsigned int i = 0; i < group->arguments.size(); i++)
+    {
+        if(group->type == INTENSION)
+            unfoldConstraint<XConstraintIntension>(group, i, &XCSP3Manager::newConstraintIntension);
+        if(group->type == EXTENSION)
+        {
+            XConstraintExtension *ce = new XConstraintExtension(group->constraint->id, group->constraint->classes);
+            group->unfoldArgumentNumber(i, ce);
+
+            if(i > 0)
+            {
+                // check previous args
+                bool same = true;
+                for(unsigned int j = 0; j < previousArguments.size(); j++)
+                    if(previousArguments[j]->domain->equals(ce->list[j]->domain) == false)
+                    {
+                        same = false;
+                        break;
+                    }
+                if(same == false)
+                    previousArguments.clear();
+            }
+
+            if(i > 0 && previousArguments.size() > 0)
+                newConstraintExtensionAsLastOne(ce);
+            else
+            {
+                vector<XVariable *> list;
+                list.assign(group->constraint->list.begin(), group->constraint->list.end());
+                group->constraint->list.assign(ce->list.begin(), ce->list.end());
+                previousArguments.assign(ce->list.begin(), ce->list.end());
+                newConstraintExtension((XConstraintExtension *) group->constraint);
+                group->constraint->list.assign(list.begin(), list.end());
+            }
+            delete ce;
+        }
+
+        if(group->type == INSTANTIATION)
+            unfoldConstraint<XConstraintInstantiation>(group, i, &XCSP3Manager::newConstraintInstantiation);
+        if(group->type == ALLDIFF)
+            unfoldConstraint<XConstraintAllDiff>(group, i, &XCSP3Manager::newConstraintAllDiff);
+        if(group->type == ALLEQUAL)
+            unfoldConstraint<XConstraintAllEqual>(group, i, &XCSP3Manager::newConstraintAllEqual);
+        if(group->type == SUM) 
+            unfoldConstraint<XConstraintSum>(group, i, &XCSP3Manager::newConstraintSum);
+        if(group->type == ORDERED)
+            unfoldConstraint<XConstraintOrdered>(group, i, &XCSP3Manager::newConstraintOrdered);
+        if(group->type == COUNT)
+            unfoldConstraint<XConstraintCount>(group, i, &XCSP3Manager::newConstraintCount);
+        if(group->type == NVALUES)
+            unfoldConstraint<XConstraintNValues>(group, i, &XCSP3Manager::newConstraintNValues);
+        if(group->type == CARDINALITY)
+            unfoldConstraint<XConstraintCardinality>(group, i, &XCSP3Manager::newConstraintCardinality);
+        if(group->type == MAXIMUM)
+            unfoldConstraint<XConstraintMaximum>(group, i, &XCSP3Manager::newConstraintMaximum);
+        if(group->type == MINIMUM)
+            unfoldConstraint<XConstraintMinimum>(group, i, &XCSP3Manager::newConstraintMinimum);
+        if(group->type == ELEMENT)
+            unfoldConstraint<XConstraintElement>(group, i, &XCSP3Manager::newConstraintElement);
+        if(group->type == NOOVERLAP)
+            unfoldConstraint<XConstraintNoOverlap>(group, i, &XCSP3Manager::newConstraintNoOverlap);
+        if(group->type == STRETCH)
+            unfoldConstraint<XConstraintStretch>(group, i, &XCSP3Manager::newConstraintStretch);
+        if(group->type == LEX)
+            unfoldConstraint<XConstraintLex>(group, i, &XCSP3Manager::newConstraintLex);
+        if(group->type == CHANNEL)
+            unfoldConstraint<XConstraintChannel>(group, i, &XCSP3Manager::newConstraintChannel);
+        if(group->type == REGULAR)
+            unfoldConstraint<XConstraintRegular>(group, i, &XCSP3Manager::newConstraintRegular);
+        if(group->type == MDD)
+            unfoldConstraint<XConstraintMDD>(group, i, &XCSP3Manager::newConstraintMDD);
+        if(group->type == CIRCUIT)
+            unfoldConstraint<XConstraintCircuit>(group, i, &XCSP3Manager::newConstraintCircuit);
+        if(group->type == CUMULATIVE)
+            unfoldConstraint<XConstraintCumulative>(group, i, &XCSP3Manager::newConstraintCumulative);
+        
+        if(group->type == UNKNOWN)
+        {
+            throw runtime_error("Group constraint is badly defined");
+        }
+    }
+}
+
+
+void XCSP3Manager::addObjective(XObjective *objective)
+{
+    if(objective->type == EXPRESSION_O_)
+    {
+        XVariable *x = (XVariable *) mapping[objective->expression];
+        if(x != NULL)
+        {
+            if(objective->goal == MINIMIZE)
+                callback->buildObjectiveMinimizeVariable(x);
+            else
+                callback->buildObjectiveMaximizeVariable(x);
+            return;
+        }
+        if(objective->goal = MINIMIZE)
+            callback->buildObjectiveMinimizeExpression(objective->expression);
+        else
+            callback->buildObjectiveMaximizeExpression(objective->expression);
+        return;
+    }
+    if(objective->type == SUM_O && callback->normalizeSum)
+    {
+        if(objective->coeffs.size() == 0)
+        {
+            bool toModify = false;
+            // Check if a variable appears two times
+            for(unsigned int i = 0; i < objective->list.size() - 1; i++)
+                for(auto j = i + 1; j < objective->list.size(); j++)
+                {
+                    if(objective->list[i]->id == objective->list[j]->id)
+                        toModify = true;
+                }
+            if(toModify)
+                objective->coeffs.assign(objective->list.size(), 1);
+        }
+        if(objective->coeffs.size() > 0)
+            normalizeSum(objective->list, objective->coeffs);
+    }
+
+    if(objective->coeffs.size() == 0)
+    {
+        if(objective->goal == MINIMIZE)
+            callback->buildObjectiveMinimize(objective->type, objective->list);
+        else
+            callback->buildObjectiveMaximize(objective->type, objective->list);
+        return;
+    }
+    if(objective->goal == MINIMIZE)
+        callback->buildObjectiveMinimize(objective->type, objective->list, objective->coeffs);
+    else
+        callback->buildObjectiveMaximize(objective->type, objective->list, objective->coeffs);
+}
