@@ -863,5 +863,388 @@ void XMLParser::CountTagAction::endTag()
         this->parser->manager->newConstraintCount(constraint);
         delete constraint;
     }
+
+}
+
+
+/********************************************************************
+ * Actions performed on CARDINALITY tag
+ *******************************************************************/
+
+
+void XMLParser::CardinalityTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+    this->parser->closed = false;
+    constraint = new XConstraintCardinality(this->id, this->parser->classes);
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = CARDINALITY;
+    }
+
+}
+
+
+void XMLParser::CardinalityTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    constraint->values.assign(this->parser->values.begin(), this->parser->values.end());
+    constraint->occurs.assign(this->parser->occurs.begin(), this->parser->occurs.end());
+    constraint->closed = this->parser->closed;
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintCardinality(constraint);
+        delete constraint;
+    }
+
+}
+
+
+
+/********************************************************************
+ ********************************************************************
+ *                     CONNECTION CONSTRAINTS
+ ********************************************************************
+ *******************************************************************/
+
+
+/********************************************************************
+ * Actions performed on CHANNEL tag
+ *******************************************************************/
+
+
+void XMLParser::ChannelTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintChannel(this->id, this->parser->classes);
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = CHANNEL;
+    }
+
+}
+
+
+// const UTF8String txt, bool last
+void XMLParser::ChannelTagAction::text(const UTF8String txt, bool)
+{
+    // if (this->parser->list.size() == 0)
+    this->parser->parseSequence(txt, this->parser->lists[0]);
+}
+
+
+void XMLParser::ChannelTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    constraint->startIndex1 = this->parser->startIndex;
+
+    if(this->parser->values.size() == 1)
+        constraint->value = this->parser->values[0];
+    else if(this->parser->values.size() > 1)
+        throw runtime_error("<value> tag accepts only one value");
     
+    if(this->parser->lists.size() == 2)
+    {
+        constraint->secondList.assign(this->parser->lists[1].begin(), this->parser->lists[1].end());
+        constraint->startIndex2 = this->parser->startIndex2;
+    }
+
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintChannel(constraint);
+        delete constraint;
+    }
+}
+
+
+/********************************************************************
+ * Actions performed on ELEMENT tag
+ *******************************************************************/
+
+
+void XMLParser::ElementTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintElement(this->id, this->parser->classes);
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = ELEMENT;
+    }
+}
+
+
+void XMLParser::ElementTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    constraint->startIndex = this->parser->startIndex;
+    constraint->index = this->parser->index;
+    constraint->rank = this->parser->rank;
+
+    if(this->parser->values.size() != 1)
+        throw runtime_error("<element> tag should have one value");
+    constraint->value = this->parser->values[0];
+
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintElement(constraint);
+        delete constraint;
+    }
+}
+
+
+/********************************************************************
+ * Actions performed on MAXIMUM or MINIMUM tag
+ *******************************************************************/
+
+
+void XMLParser::MinMaxTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraints = new XConstraintMaximum(this->id, this->parser->classes);
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        if(this->tagName == "maximum")
+            this->group->type = MAXIMUM;
+        else
+            this->group->type = MINIMUM;
+    }
+}
+
+
+void XMLParser::MinMaxTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    constraint->startIndex = this->parser->startIndex;
+    constraint->condition = this->parser->condition;
+    constraint->index = this->parser->index;
+    constraint->rank = this->parser->rank;
+
+    if(this->group == NULL)
+    {
+        if(this->tagName == "maximum")
+            this->parser->manager->newConstraintMaximum(constraint);
+        else
+            this->parser->manager->newConstraintMinimum(constraint);
+        delete constraint;
+    }
+}
+
+
+
+/********************************************************************
+ ********************************************************************
+ *                PACKING and SCHEDULING CONSTRAINTS
+ ********************************************************************
+ *******************************************************************/
+
+
+/********************************************************************
+ * Actions performed on STRETCH tag
+ *******************************************************************/
+
+
+void XMLParser::StretchTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintStretch(this->id, this->parser->classes);
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = STRETCH;
+    }
+}
+
+
+void XMLParser::StretchTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    for(XEntity *xi : this->parser->values)
+    {
+        int v;
+        isInteger(xi, v);
+        constraint->values.push_back(v);
+    }
+
+    for(unsigned int i = 0; i < this->parser->widths.size(); i++)
+    {
+        XIntegerInterval *xrange = dynamic_cast<XIntegerInterval *>(this->parser->widths[i]);
+        constraint->widths.push_back(XInterval(xrange->min, xrange->max));
+    }
+
+
+    if(this->parser->patterns.size() > 0)
+    {
+        constraint->patterns.reserve(this->parser->patterns.size());
+        for(unsigned int i = 0; i < this->parser->patterns.size(); i++)
+            constraint->patterns[i].assign(this->parser->patterns[i].begin(), this->parser->patterns[i].end());
+    }
+
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintStretch(constraint);
+        delete constraint;
+    }
+}
+
+
+/********************************************************************
+ * Actions performed on NOOVERLAP tag
+ *******************************************************************/
+
+
+void XMLParser::NoOverlapTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+    diffn = false;
+    constraint = new XConstraintNoOverlap(this->id, this->parser->classes);
+    if(!attributes["zeroIgnored"].isNull())
+    {
+        string tmp;
+        attributes["zeroIgnored"].to(tmp);
+        this->parser->zeroIgnored = (tmp == "true");
+    }
+    else
+        this->parser->zeroIgnored = true;
+
+    
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = NOOVERLAP;
+    }
+}
+
+
+void XMLParser::NoOverlapTagAction::endTag()
+{
+    constraint->list.assign(this->parser->origins.begin(), this->parser->origins.end());
+    constraint->lengths.assign(this->parser->lengths.begin(), this->parser->lengths.end());
+    constraint->zeroIgnored = this->parser->zeroIgnored();
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintNoOverlap(constraint);
+        delete constraint;
+    }
+}
+
+
+/********************************************************************
+ * Actions performed on CUMULATIVE tag
+ *******************************************************************/
+
+
+void XMLParser::CumulativeTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintCumulative(this->id, this->parser->classes);
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constrainta = constraint;
+        this->group->type = CUMULATIVE;
+    }
+}
+
+
+void XMLParser::CumulativeTagAction::endTag()
+{
+    constraint->list.assign(this->parser->origins.begin(), this->parser->origins.end());
+    constraint->lengths.assign(this->parser->lengths.begin(), this->parser->lengths.end());
+    constraint->ends.assign(this->parser->ends.begin(), this->parser->ends.end());
+    constraint->heights.assign(this->parser->heights.begin(), this->parser->heights.end());
+    constraint->condition = this->parser->condition;
+
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintCumulative(constraint);
+        delete constraint;
+    }
+}
+
+
+
+/********************************************************************
+ ********************************************************************
+ *                  CONSTRAINTS DEFINED ON GRAPHS
+ ********************************************************************
+ *******************************************************************/
+
+
+void XMLParser::CircuitTagAction::beginTag(const AttributeList &attributes)
+{
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintCircuit(this->id, this->parser->classes);
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = CIRCUIT;
+    }
+    this->parser->values.clear();
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::CircuitTagAction::text(const UTF8String txt, bool)
+{
+    this->parser->parseSequence(txt, this->parser->lists[0]);
+}
+
+
+void XMLParser::CircuitTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    constraint->startIndex = this->parser->startIndex;
+    if(this->parser->values.size() == 1)
+        constraint->value = this->parser->values[0];
+    else
+    {
+        if(this->parser->values.size() == 0)
+            constraint->value = nullptr;
+        else
+            throw runtime_error("<size> tag accepts only one value");
+    }
+
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintCircuit(constraint);
+        delete constraint;
+    }
 }
