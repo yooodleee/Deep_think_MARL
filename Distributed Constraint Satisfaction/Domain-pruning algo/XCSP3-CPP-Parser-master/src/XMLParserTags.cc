@@ -1588,5 +1588,415 @@ void XMLParser::ConflictOrSupportTagAction::beginTag(const AttributeList &)
         support = false;
     
     ((XMLParser::ExtensionTagAction *) this->parser->getParentTagAction())->constraint->isSupport = support;
+
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::ConflictOrSupportTagAction::text(const UTF8String txt, bool)
+{
+    XConstraintExtension *ctr = ((XMLParser::ExtensionTagAction *) this->parser->getParentTagAction())->constraint;
+    if(this->parser->lists[0].size() == 1 && this->parser->lists[0][0]->id != "%...")
+    {
+        vector<XIntegerEntity *> tmplist;
+        this->parser->parseListOfIntegerOrInterval(txt, tmplist);
+        for(unsigned int i = 0; i < tmplist.size(); i++)
+        {
+            for(int val = tmplist[i]->minimum(); val <= tmplist[i]->maximum(); val++)
+            {
+                ctr->tuples.push_back(vector<int>());
+                ctr->tuples.back().push_back(val);
+            }
+        }
+    }
+    else
+        this->parser->star != this->parser->parseTuples(txt, ctr->tuples);
+}
+
+
+/********************************************************************
+ * Actions performed on GROUP tag
+ *******************************************************************/
+
+
+void XMLParser::GroupTagAction::beginTag(const AttributeList &attributes)
+{
+    string lid, tmp;
+    // this->checkParentTag("constraints");
+    attributes["id"].to(lid);
+
+    if(!attributes["class"].isNull())
+        attributes["class"].to(tmp);
+    
+    group = new XConstraintGroup(lid, tmp);
+    this->parser->manager->beginGroup(lid);
+
+}
+
+
+void XMLParser::GroupTagAction::endTag()
+{
+    if(group->constraint == NULL)
+        throw runtime_error("<group> constraint is not linked to a classical constraint");
+    
+    this->parser->manager->newConstraintGroup(group);
+    this->parser->manager->endGroup();
+    delete group;
+
+}
+
+
+/********************************************************************
+ * Actions performed on SLIDE tag
+ *******************************************************************/
+
+
+void XMLParser::SlideTagAction::beginTag(const AttributeList &attributes)
+{
+    string lid, tmp;
+    // this->checkParentTag("constraints");
+    attributes["id"].to(lid);
+    if(!attributes["circular"].isNull())
+    {
+        string tmp;
+        attributes["circular"].to(tmp);
+        circular = (tmp == "true");
+    }
+    if(!attributes["class"].isNull())
+        attributes["class"].to(tmp);
+    
+    group = new XConstraintGroup(lid, tmp);
+    this->parser->lists.clear();
+    this->parser->listTag->nbCallsToList = 0;
+    this->parser->lists.push_back(vector<XVariable *>());   // Be careful, why not?? see after revision e32b7f8
+    list.clear();
+    this->parser->manager->beginSlide(lid, circular);
+
+}
+
+
+void XMLParser::SlideTagAction::endTag()
+{
+    if(group->constraint == NULL)
+        throw runtime_error("<slide> constraint is not linked to a classical constraint");
+    
+    // Create list of args
+    if(this->parser->lists.size() != 1) 
+        throw runtime_error("Multiple lists in slide constraint is not yet supported");
+    
+
+    unsigned long arity;
+    if(this->parser->nbParameters == 0)
+    {
+        XConstraintIntension *c = (XConstraintIntension *) group->constraint;
+        int ar = 0;
+        for(;; ar++)
+        {
+            if(c->function.find("%" + std::to_string(ar)) == string::npos)
+                break;
+        }
+        arity = ar;
+    }
+    else
+        arity = this->parser->nbParameters;
+    
+    unsigned long ned = circular ? list.size() - arity + 2 : list.size() - arity + 1;
+    for(unsigned int i = 0; i < end; i += offse)
+    {
+        group->arguments.push_back(vector<XVariable *>());
+        for(unsigned int j = 0; j < arity; j++)
+        {
+            group->arguments.back().push_back(list[(i + j) % list.size()]);
+        }
+    }
+
+    this->parser->manager->newConstraintGroup(group);
+
+    this->parser->manager->endSlide();
+    delete group;
+
+}
+
+
+/********************************************************************
+ * Actions performed on GROUP tag
+ *******************************************************************/
+
+
+void XMLParser::BlockTagAction::beginTag(const AttributeList &attributes)
+{
+    string classes, lid;
+
+    this->checkParentTag("constraints");
+    attributes["id"].to(lid);
+    if(!attributes["class"].isNull())  
+        attributes["class"].to(classes);
+    else
+        classes = "";
+    this->parser->manager->beginBlock(classes);
+}
+
+
+void XMLParser::BlockTagAction::endTag()
+{
+    this->parser->manager->endBlock();
+}
+
+
+void XMLParser::IndexTagAction::beginTag(const AttributeList &attributes)
+{
+    if(!attributes["rank"].isNull())
+    {
+        string rank;
+        attributes["rank"].to(rank);
+        if(rank == "any") this->parser->rank = ANY;
+        if(rank == "first") this->parser->rank = FIRST;
+        if(rank == "last") this->parser->rank = LAST;
+    }
+
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::IndexTagAction::text(const UTF8String txt, bool)
+{
+    string tmp;
+    txt.to(tmp);
+    tmp = trim(tmp);
+    if(tmp == "")
+        return;
+    if(this->parser->index != NULL)
+        throw runtime_error("<index> tag must contain only one variable");
+    vector<XVariable *> tmpList;
+    this->parser->parseSequence(txt, tmpList);
+    if(tmpList.size() != 1)
+        throw runtime_error("<index> tag must contain only one variable");
+    this->parser->index = tmpList[0];
+
+}
+
+
+/********************************************************************
+ * Actions performed on MATRIX TAG
+ *******************************************************************/
+
+
+// AttributeList &attributes
+void XMLParser::MatrixTagAction::beginTag(const AttributeList &)
+{
+    if(strcmp(this->parser->getParentTagAction(2)->getTagName(), "group") == 0)
+        throw runtime_error("<matrix> can not be used in a <group>");
+    
+    if(strcmp(this->parser->getParentTagAction(2)->getTagName(), "slide") == 0)
+        throw runtime_error("<matrix> can not be used in a <slide>");
+
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::MatrixTagAction::text(const UTF8String txt, bool)
+{
+    if(txt.isWhiteSpace())
+        return;
+    
+    string txt2;
+    txt.to(txt2);
+    txt2 = trim(txt2);
+    size_t p = txt2.find(("("));
+
+    if(p == string::npos)
+    {
+        size_t pos = txt2.find("[");
+        if(pos == string::npos)
+            throw runtime_error("matrix needs a 2-dim matrix");
+        
+        string name;
+        string compactForm;
+        name = txt2.substr(0, pos);
+        compactForm = txt2.substr(pos);
+
+        if(this->parser->variablesList[name] == NULL)
+            throw runtime_error("Matrix variable " + name + "dones not exist");
+
+        XVariableArray *varArray = ((XVariableArray *) this->parser->variablesList[name]);
+        int nbV = 0;
+        string tmp;
+
+        // Find the first interval
+        for(unsigned int i = 0; i < varArray->sizes.size(); i++)
+        {
+            int pos = compactForm.find(']');
+            tmp = compactForm.substr(1, pos - 1);
+            compactForm = compactForm.substr(pos + 1);
+            if(tmp.size() == 0)
+            {
+                nbV = varArray->sizes[i];
+                break;
+            }
+            size_t dot = tmp.find("..");
+            if(dot == string::npos)
+                continue;
+            
+            int first = std::stoi(tmp.substr(0, dot));
+            int last = std::stoi(tmp.substr(dot + 2));
+            nbV = last - first + 1;
+            break;
+        }
+
+
+        this->parser->parseSequence(txt, this->parser->lists[0]);
+        int nbCol = this->parser->lists[0].size() / nbV;
+        for(int i = 0; i < nbV; i++)
+        {
+            this->parser->matrix.push_back(vector<XVariable *>());
+            for(int j = 0; j < nbCol; j++)
+                this->parser->matrix.back().push_back(this->parser->lists[0][i * nbCol + j]);
+        }
+    }
+    else
+    {
+        vector<char> delims;
+        delims.push_back('(');
+        delims.push_back(')');
+        delims.push_back(',');
+        this->parser->parseSequence(txt, this->parser->lists[0], delims);
+
+        for(XVariable *x : this->parser->lists[0])
+        {
+            if(x == NULL)
+                this->parser->matrix.push_back(vector<XVariable *>());
+            else
+                this->parser->matrix.back().push_back(x);
+        }
+    }
+}
+
+
+void XMLParser::MatrixTagAction::endTag()
+{
+    for(unsigned int i = 0; i < this->parser->matrix.size() - 1; i++)
+        if(this->parser->matrix[i].size() != this->parser->matrix[i + 1].size())
+            throw runtime_error("Matrix is not a matrix...");
+
+}
+
+
+// AttributeList &attributes
+void XMLParser::TransitionsTagAction::beginTag(const AttributeList &)
+{
+    nb = 0;
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::TransitionsTagAction::text(const UTF8String txt, bool)
+{
+    if(txt.isWhiteSpace())
+        continue;
+    
+    UTF8String::Tokenizer tokenizer(txt);
+    tokenizer.addSeparator(')');
+    tokenizer.addSeparator(',');
+    tokenizer.addSeparator('(');
+
+    // nb = 0 : from nb=1 : val nb=2 to
+    while(tokenizer.hasMoreTokens())
+    {
+        UTF8String token = tokenizer.nextToken();
+        if(token == UTF8String(",")) continue;
+        if(token == UTF8String("("))
+        {
+            nb = 0; // Start
+            continue;
+        }
+        if(token == UTF8String(")"))
+        {
+            assert(from != "");
+            this->parser->transitions.push_back(XTransition(from, val, to));
+            continue;
+        }
+        
+        if(nb == 0) token.to(from);
+        if(nb == 1) token.to(val);
+        if(nb == 2) token.to(to);
+        if(nb > 2) throw runtime_error("<transitions> tag is malformed");
+        nb++;
+    }
+
+}
+
+
+/********************************************************************
+ * Actions performed on PATTERNS tag
+ *******************************************************************/
+
+
+// const AttributeList &attributes
+void XMLParser::PatternsTagAction::beginTag(const AttributeList &)
+{
+    listToFill.clear();
+}
+
+
+// const UTF8String txt, bool last
+void XMLParser::PatternsTagAction::text(const UTF8String txt, bool)
+{
+    vector<char> delims;
+    delims.push_back('(');
+    delims.push_back(')');
+    delims.push_back(',');
+    this->parser->parseSequence(txt, listToFill, delims);
+
+    for(XVariable *x : listToFill)
+    {
+        if(x == NULL)
+        {
+            if(this->parser->patterns.size() > 0 && this->parser->patterns.back().size() != 2)
+                throw runtime_error("patterns needs copules of integers");
+            this->parser->patterns.push_back(vector<int>());
+        }
+        else
+        {
+            int nb;
+            if(!isInteger(x, nb))
+                throw runtime_error("patterns accepts only integers: " + x->id);
+            this->parser->patterns.back().push_back(nb);
+        }
+    }
+
+}
+
+
+/********************************************************************
+ *                          ANNOTATIONS
+ *******************************************************************/
+
+
+void XMLParser::AnnotationsTagAction::beginTag(const AttributeList &attributes)
+{
+    this->parser->manager->beginAnnotations();
+
+}
+
+
+void XMLParser::AnnotationsTagAction::endTag()
+{
+    this->parser->manager->endAnnotations();
+
+}
+
+
+void XMLParser::DecisionTagAction::beginTag(const AttributeList &attributes) { }
+
+
+void XMLParser::DecisionTagAction::text(const UTF8String txt, bool last)
+{
+    this->parser->parseSequence(txt, list);
+}
+
+
+void XMLParser::DecisionTagAction::endTag()
+{
+    this->parser->manager->buildAnnotationDecision(list);
     
 }
