@@ -528,3 +528,340 @@ void XMLParser::MDDTagAction::endTag()
 
 
 
+/********************************************************************
+ ********************************************************************
+ *                 CONSTRAINTS DEFINED ON COMPARISON
+ ********************************************************************
+ *******************************************************************/
+
+
+/********************************************************************
+ * Actions performed on ALLDIFF tag / ALLEQUAL
+ *******************************************************************/
+
+
+void XMLParser::AllDiffEqualTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    if(this->tagName == "allDifferent")
+    {
+        alldiff = new XConstraintAllDiff(this->id, this->parser->classes);
+        ct = alldiff;
+    }
+    else
+    {
+        allequal = new XConstraintAllEqual(this->id, this->parser->classes);
+        ct = allequal;
+    }
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        if(this->tagName == "allDifferent")
+            this->group->type = ALLDIFF;
+        else
+            this->group->type = ALLEQUAL;
+        this->group->constraint = ct;
+    }
+
+}
+
+
+
+// UTF8String txt, bool last
+void XMLParser::AllDiffEqualTagAction::text(const UTF8String txt, bool)
+{
+    this->parser->parseSequence(txt, this->parser->lists[0]);
+}
+
+
+void XMLParser::AllDiffEqualTagAction::endTag()
+{
+    if((this->parser->lists() > 1 || this->parser->matrix.size() > 0) && this->group != NULL)
+        throw runtime_error("AllDiff matrix and AllDiff lists are not implemented with groups");
+    
+    if(this->group == NULL)
+    {
+        if(this->tagName == "allDifferent")
+        {
+            if(this->parser->lists.size() > 1)
+            {
+                if(this->parser->integers.size() > 0)   // Except not implemented
+                    throw runtime_error("except tag not allowed with alldiff on lists");
+                
+                XConstraintAllDiffList *ctl = new XConstraintAllDiffList(this->id, this->parser->classes);
+                for(unsigned int i = 0; i < this->parser->lists.size(); i++)
+                    ctl->matrix.push_back(vector<XVariable *>(this->parser->lists[i].begin(),
+                                          this->parser->lists[i].end()));
+                this->parser->manager->newConstraintAllDiffList(ct1);
+                delete ctl;
+                ct = ctl;
+            }
+            else
+            {
+                if(this->parser->matrix.size() > 0)
+                {
+                    // Matrix
+                    XConstraintAllDiffMatrix *ctm = new XConstraintAllDiffMatrix(this->id, this->parser->classes, this->parser->matrix);
+                    this->parser->manager->newConstraintAllDiffMatrix(ctm);
+                    delete ct;
+                    ct = ctm;
+                }
+                else
+                {
+                    // Alldiff classic
+                    ct->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+                    alldiff->except.assign(this->parser->integers.begin(), this->parser->integers.end());
+                    this->parser->manager->newConstraintAllDiff(alldiff);
+                }
+            }
+        }
+        else
+        {
+            ct->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+            this->parser->manager->newConstraintAllEqual(allequal);
+        }
+        delete ct;
+    }
+    else
+    {
+        ct->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    }
+
+}
+
+
+
+/********************************************************************
+ * Actions performed on ORDERED tag
+ *******************************************************************/
+
+
+void XMLParser::OrderedTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintOrdered(this->id, this->parser->classes);
+    string cs;
+    attributes["case"].to(cs);
+    if(cs == "strictlyDecreasing") this->parser->op = GT;
+    if(cs == "decreasing") this->parser->op = GE;
+    if(cs == "strictlyIncreasing") this->parser->op = LT;
+    if(cs == "increasing") this->parser->op = LE;
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = ORDERED;
+    }
+
+}
+
+
+// const UTF8String txt, bool last
+void XMLParser::OrderedTagAction::text(const UTF8String txt, bool)
+{
+    this->parser->parseSequence(txt, this->parser->lists[0]);
+}
+
+
+void XMLParser::OrderedTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    constraint->op = this->parser->op;
+    if(this->group == NULL)
+    {
+        if(this->parser->lengths.size() > 0)
+            constraint->lengths.assign(this->parser->lengths.begin(), this->parser->lengths.end());
+        
+        this->parser->manager->newConstraintOrdered(constraint);
+        delete constraint;
+    }
+
+}
+
+
+
+/********************************************************************
+ * Actions performed on LEX tag
+ *******************************************************************/
+
+
+void XMLParser::LexTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintLex(this->id, this->parser->classes);
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = LEX;
+    }
+
+}
+
+
+void XMLParser::LexTagAction::endTag()
+{
+    if(this->parser->matrix.size() > 0)
+    {
+        XConstraintLexMatrix *lexM = new XConstraintLexMatrix(this->id, this->parser->classes);
+        lexM->op = this->parser->op;
+        for(unsigned int i = 0; i < this->parser->matrix.size(); i++)
+            lexM->matrix.push_back(vector<XVariable *>(this->parser->matrix[i].begin(),
+                                                       this->parser->matrix[i].end()));
+        
+        this->parser->manager->newConstraintLexMatrix(lexM);
+        delete lexM;
+        delete constraint;
+    }
+    else
+    {
+        if(this->parser->lists.size() == 0)
+            throw runtime_error("<lex> tag should have many lists");
+        
+        for(unsigned int i = 0; i < this->parser->lists.size(); i++)
+            constraint->lists.push_back(vector<XVariable *>(this->parser->lists[i].begin(),
+                                                            this->parser->lists[i].end()));
+        constraint->op = this->parser->op;
+        if(this->group == NULL)
+        {
+            this->parser->manager->newConstraintLex(constraint);
+            delete constraint;
+        }
+    }
+
+}
+
+
+
+/********************************************************************
+ ********************************************************************
+ *                 COUNTING AND SUMMING CONSTRAINTS
+ ********************************************************************
+ *******************************************************************/
+
+
+/********************************************************************
+ * Actions performed on SUM tag
+ *******************************************************************/
+
+
+void XMLParser::SumTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintSum(this->id, this->parser->classes);
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = SUM;
+    }
+
+}
+
+
+void XMLParser::SumTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    if(this->parser->values.size() == 0)
+        constraint->values.clear();
+    else
+        constraint->values.assign(this->parser->values.begin(), this->parser->values.end());
+    
+    constraint->condition = this->parser->condition;
+
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintSum(constraint);
+        delete constraint;
+    }
+
+}
+
+
+/********************************************************************
+ * Actions performed on NVALUES tag
+ *******************************************************************/
+
+
+void XMLParser::NValuesTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintNValues(this->id, this->parser->classes);
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = NVALUES;
+    }
+
+}
+
+
+void XMLParser::NValuesTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    constraint->condition = this->parser->condition;
+    constraint->except.assign(this->parser->integers.begin(), this->parser->integers.end());
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintNValues(constraint);
+        delete constraint;
+    }
+
+}
+
+
+/********************************************************************
+ * Actions performed on COUNT tag
+ *******************************************************************/
+
+
+void XMLParser::CountTagAction::beginTag(const AttributeList &attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintCount(this->id, this->parser->classes);
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = COUNT;
+    }
+
+}
+
+
+void XMLParser::CountTagAction::endTag()
+{
+    constraint->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    constraint->values.assign(this->parser->values.begin(), this->parser->values.end());
+    constraint->condition = this->parser->condition;
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintCount(constraint);
+        delete constraint;
+    }
+    
+}
