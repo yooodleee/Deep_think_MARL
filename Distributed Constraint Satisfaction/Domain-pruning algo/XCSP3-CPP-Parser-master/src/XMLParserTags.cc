@@ -1248,3 +1248,345 @@ void XMLParser::CircuitTagAction::endTag()
         delete constraint;
     }
 }
+
+
+
+/********************************************************************
+ ********************************************************************
+ *                          OBJECTIVES
+ ********************************************************************
+ *******************************************************************/
+
+
+// AttributeList &attribues
+void XMLParser::ObjectivesTagAction::beginTag(const AttributeList &)
+{
+    objective = new XObjective();
+    this->parser->expr = "";
+    this->checkParentTag("instance");
+    this->parser->lists.clear();
+    this->parser->listTag->nbCallsToList = 0;
+    this->parser->integers.clear();
+    this->parser->values.clear();
+    this->parser->lists.push_back(vector<XVariable *>());
+    this->parser->manager->beginObjectives();
+}
+
+
+void XMLParser::ObjectivesTagAction::endTag()
+{
+    if(this->parser->expr != "")
+        objective->expression = this->parser->expr;
+    
+    if(this->parser->lists[0].size() > 0)
+        objective->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    if(this->parser->values.size() > 0)
+    {
+        int value;
+        for(XEntity *xe : this->parser->values)
+        {
+            isInteger(xe, value);
+            objective->coeffs.push_back(value);
+        }
+    }
+    else if(objective->type != EXPRESSION_O)
+    {
+        objective->coeffs.assign(objective->list.size(), 1);
+    }
+
+    this->parser->manager->addObjective(objective);
+    delete objective;
+    this->parser->manager->endObjectives();
+
+}
+
+
+void XMLParser::MinimizeOrMaximizeTagAction::beginTag(const AttributeList &attributes)
+{
+    obj = ((XMLParser::ObjectivesTagAction *) this->parser->getParentTagAction())->objective;
+    obj->goal = (this->tagName == "minimize") ? MINIMIZE : MAXIMIZE;
+    string tmp;
+    this->checkParentTag("objectives");
+
+    attributes["type"].to(tmp);
+    obj->type = EXPRESSION_O;
+    if(tmp == "sum") obj->type = SUM_O;
+    if(tmp == "product") obj->type = PRODUCT_O;
+    if(tmp == "minimum") obj->type = MINIMUM_O;
+    if(tmp == "maximum") obj->type = MAXIMUM_O;
+    if(tmp == "nValues") obj->type = NVALUES_O;
+    if(tmp == "lex") obj->type = LEX_O;
+    
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::MinimizeOrMaximizeTagAction::text(const UTF8String txt, bool)
+{
+    string ip;
+    txt.to(op);
+    if(trim(op) == "") return;  // skip white space.
+
+    if(obj->type == EXPRESSION_O)
+        this->parser->expr = op;
+    else
+        this->parser->parseSequence(txt, this->parser->lists[0]);
+}
+
+
+
+/********************************************************************
+ * Actions performed on list of variables integers... tag
+ *******************************************************************/
+
+
+// UTF8String txt, bool last
+void XMLParser::ListOfIntegerTagAction::text(const UTF8String txt, bool)
+{
+    UTF8String::Tokenizer tokenizer(txt);
+    while(tokenizer.hasMoreTokens())
+    {
+        UTF8String token = tokenizer.nextToken();
+        int c = -1;
+        token.to(c);
+        this->parser->integers.push_back(c);
+    }
+}
+
+
+void XMLParser::ListOfVariablesOrIntegerTagAction::beginTag(const AttributeList &attributes)
+{
+    listToFill.clear();
+    if(!attributes["closed"].isNull())
+    {
+        string tmp;
+        attributes["closed"].to(tmp);
+        this->parser->closed = (tmp == "true");
+    }
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::ListOfVariablesOrIntegerTagAction::text(const UTF8String txt, bool)
+{
+    this->parser->parseSequence(txt, listToFill);
+}
+
+
+// AttributeList &attributes
+void XMLParser::ListOfVariablesOrIntegerOrIntervalTagAction::beginTag(const AttributeList &)
+{
+    listToFill.clear();
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::ListOfVariablesOrIntegerOrIntervalTagAction::text(const UTF8String txt, bool)
+{
+    this->parser->keepIntervals = true;
+    this->parser->parseSequence(txt, listToFill);
+    this->parser->keepIntervals = false;
+}
+
+
+// AttributeList &attributes) {
+void XMLParser::ListOfIntegerOrIntervalTagAction::beginTag(const AttributeList &)
+{
+    listToFill.clear();
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::ListOfIntegerOrIntervalTagAction::text(const UTF8String txt, bool)
+{
+    this->parser->parseListOfIntegerOrInterval(txt, listToFill);
+}
+
+
+
+/********************************************************************
+ * Actions performed on ORIGINS tag
+ *******************************************************************/
+
+
+// AttributeList &attributes
+void XMLParser::OriginsTagAction::beginTag(const AttributeList &)
+{
+    listToFill.clear();
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::OriginsTagAction::text(const UTF8String txt, bool)
+{
+    vector<char> delims;
+    delims.push_back('(');
+    delims.push_back(')');
+    delims.push_back(',');
+    this->parser->parseSequence(txt, listToFill, delims);
+}
+
+
+
+/********************************************************************
+ * Actions performed on ARGS tag
+ *******************************************************************/
+
+
+// AttributeList &attributes
+void XMLParser::ArgsTagAction::beginTag(const AttributeList &)
+{
+    this->parser->args.clear();
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::ArgsTagAction::text(const UTF8String txt, bool)
+{
+    this->parser->parseSequence(txt, this->parser->args);
+}
+
+
+void XMLParser::ArgsTagAction::endTag()
+{
+    XConstraintGroup *group = ((GroupTagAction *) this->parser->getParentTagAction())->group;
+    group->arguments.push_back(vector<XVariable *>(this->parser->args.begin(),
+                                                   this->parser->args.end()));
+}
+
+
+
+/********************************************************************
+ * Actions performed on Operator tag
+ *******************************************************************/
+
+
+// UTF8String txt, bool last
+void XMLParser::OperatorTagAction::text(const UTF8String txt, bool)
+{
+    string op;
+    txt.to(op);
+    if(trim(op) == "") return;  // skip white space.
+    if(op == "lt") this->parser->op = LT;
+    if(op == "le") this->parser->op = LE;
+    if(op == "gt") this->parser->op = GT;
+    if(op == "ge") this->parser->op = GE;
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::StringTagAction::text(const UTF8String txt, bool)
+{
+    string tmp;
+    txt.to(tmp);
+    tmp = trim(tmp);
+    if(tmp == "")
+        return;
+    if(this->tagName == "final")
+    {
+        this->parser->final = tmp;
+    }
+    if(this->tagName == "start")
+        this->parser->start = tmp;
+}
+
+
+/********************************************************************
+ * Actions performed on instantiation tag
+ *******************************************************************/
+
+
+void XMLParser::InstantiationTagAction::beginTag(const AttributeList *attributes)
+{
+    // Must be called inside a constraint
+    BasicConstraintTagAction::beginTag(attributes);
+
+    constraint = new XConstraintInstantiation(this->id, this->parser->classes);
+
+
+    // Link constraint to group
+    if(this->group != NULL)
+    {
+        this->group->constraint = constraint;
+        this->group->type = INSTANTIATION;
+    }
+}
+
+
+void XMLParser::InstantiationTagAction::endTag()
+{
+    constraints->list.assign(this->parser->lists[0].begin(), this->parser->lists[0].end());
+    constraint->values.clear();
+    for(XEntity *xi : this->parser->values)
+    {
+        int v;
+        isInteger(xi, v);
+        constraint->values.push_back(v);
+    }
+    if(this->group == NULL)
+    {
+        this->parser->manager->newConstraintInstantiation(constraint);
+        delete constraint;
+    }
+}
+
+
+void XMLParser::ListTagAction::beginTag(const AttributeList &attributes)
+{
+    nbCallsToList++;
+    if(nbCallsToList > 1)
+    {
+        this->parser->lists.push_back(vector<XVariable *>());
+        this->parser->startIndex2 = 0;
+        if(!attributes["startIndex"].isNull())
+            attributes["startIndex"].to(this->parser->startIndex2);
+    }
+    else
+    {
+        this->parser->startIndex = 0;
+        if(!attributes["startIndex"].isNull())
+            attributes["startIndex"].to(this->parser->startIndex);
+    }
+    if(!attributes["offset"].isNull())
+    {
+        SlideTagAction *slide = ((XMLParser::SlideTagAction *) this->parser->getParentTagAction());
+        attributes["offset"].to(slide->offset);
+    }
+}
+
+
+// UTF8String txt, bool last
+void XMLParser::ListTagAction::text(const UTF8String txt, bool)
+{
+    this->parser->parseSequence(txt, this->parser->lists.back());
+}
+
+
+void XMLParser::ListTagAction::endTag()
+{
+    if(this->parser->getParentTagAction() != NULL &&
+       strcmp(this->parser->getParentTagAction()->getTagName(), "slide") == 0)
+    {
+        assert(this->parser->lists.size() == 1);
+        SlideTagAction *sl = ((XMLParser::SlideTagAction *) this->parser->getParentTagAction());
+        sl->list.insert(sl->list.begin(), this->parser->lists[0].begin(), this->parser->lists[0].end());
+        nbCallsToList = 0;
+        this->parser->lists[0].clear(); // for sure.
+    }
+
+}
+
+
+// AttributeList &attributes
+void XMLParser::ConflictOrSupportTagAction::beginTag(const AttributeList &)
+{
+    bool support = true;
+    this->checkParentTag("extension");
+
+    this->parser->star = false;
+    if(this->tagName == "conflicts")
+        support = false;
+    
+    ((XMLParser::ExtensionTagAction *) this->parser->getParentTagAction())->constraint->isSupport = support;
+    
+}

@@ -83,12 +83,12 @@ namespace XCSP3Core {
 
 
     typedef enum expressionObjective {
-        EXPRESSION_O_,
-        SUM_O_,
-        PRODUCT_O_,
-        MINIMUM_O_,
-        MAXIMUM_O_,
-        NVALUES_O_,
+        EXPRESSION_O,
+        SUM_O,
+        PRODUCT_O,
+        MINIMUM_O,
+        MAXIMUM_O,
+        NVALUES_O,
         LEX_O
     } ExpressionObjective;
 
