@@ -61,3 +61,20 @@ Below is the pseudocode of the ABT algorithm, specifying the protocol for agent 
 ![alt text](../scripts/ABT_algorithm.png)
 
 Notice a certain wrinkle in the pseudocode, having to do with the addition of edges. Since the Nogood can include assignments of some agent Aj, which Ai was not previously constrained with, after adding Aj's assignment to its agent_view Ai sends a message to Aj asking it to add Ai to its list of outgoing links. Furthermore, after adding the link, Aj sends an ok? message to Ai each time it reassigns its variable. After storing the Nogood, Ai checks if its assignment is still consistent. If it is, a message is sent to the agent the Nogood was received from. This resending of the assignment is crucial since, as mentioned earlier, the agent sending a Nogood assumes that the receiver of the Nogood replaces its assignment. Therefore it needs to know that the assignment is still valid. If the old assignment that was forbidden by the Nogood is inconsistent, Ai tries to find a new assignment to the case when an ok? message is received.
+
+
+#### **A simple example**
+---
+
+In Section 1.3.3 we give a more elaborate example, but here is a brief illustration of the operation of the ABT algorithm on one of the simple problems encountered earlier. Consider again the instance (c) of the CSP in Figure 1.4, and assume the agents are ordered alphabetically: x1, x2, x3. They initially select values at random; suppose they all select blue. x1 notifies x2 and x3 of his choice, and x2 notifies x3. x2's local view is thus {x1 = blue}, and x3's local view is {x1 = blue, x2 = blue}. x2 and x3 must check for consistency of their local views with their own values. x2 detects the conflict, changes for consistency and similarly changes his x3. In the meantime, x3 also checks for consistency and similarly  chagnes his value to red; he, however, notifies no one. Then x3 receives a second message from x2, and updates his local view to {x1 = blue, x2 = red}. At this point he cannot find a value from his domain consistent with his local view, and, using hyper resolution, generates the Nogood {x1 = blue, x2 = red}. He communicates this Nogood to x2, the lowest ranked agent participating in the Nogood. x2 now cannot find a value consistent with his local view, generates the Nogood {x1 = blue}, and communicates it to x1. x1 detects the inconsistency with his current value, changes his value to red, and communicates the new value to x2 and x3. The process now continuous as before; x2 changes his value back to blue, x3 finds no consistent value and generate the Nogood {x1 = red, x2 = blue}, and then x2 generates the Nogood {x1 = red}. At this point x1 has the Nogood {x1 = blue} as well as the Nogood {x1 = red}, and using hyper-resolution he generates the Nogood {}, and the algorithm terminates having determined that the problem has no solution.
+
+The need for the addition of new edges is seen in a slightly modified example, show in Figure 1.5.
+
+As in the previous example, here too x3 generates the Nogood {x1 = blue, x2 = red} and notifies x2. x2 is not able to regain consistency by changing his own value. However, x1 is not a neighbor of x2, and so x2 does not have the value x1 = blue in his local view and is not able to send the Nogood {x1 = blue} to x1. So x2 sends a request to x1 to add x2 to his list of neighbors and to send x2 his current value. From there onward the algorithm proceeds as before.
+
+![alt text](../scripts/Figure_1_5.png)
+
+
+#### **An extended example: the four queens problem**
+---
+
