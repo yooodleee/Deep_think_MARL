@@ -43,7 +43,7 @@ We have given these two straw-man algorithms for two reasons. Our first reason i
 From the first alrogithm it borrows the notion of a global total ordering on the agents. From the second it borrows a message-passing protocol, albeit a more complex one, which relies on the global ordering. We will describe the ABT in its simplest form. After demonstrating it on an extended example, we will point to ways in which it can be improved upon.
 
 
-#### **The asynchronous backtracking alrogithm**
+#### **The asynchronous backtracking algorithm**
 ---
 
 As we said, the asynchronous backtracking (ABT) alrogithm assumes a total ordering (the "priority order") on the agents. Each binary constraint is known to both the constrained agents and is checked in the algorithm by the agent with the lower priority between the two. A link in the constraint network is always directed from an agent with higher priority to an agent with lower priority.
