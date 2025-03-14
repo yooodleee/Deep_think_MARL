@@ -194,3 +194,134 @@ def question_2():
         grades[1] = outof[1]
 
 
+def question_3():
+    print_title(2)
+    tested[2] = True
+
+    fails = [False, False, False, False, False, False, False, False]
+    v1 = Variable('V1', [1, 2])
+    v2 = Variable('V2', [1, 2])
+    v3 = Variable('V3', [1, 2, 3, 4, 5])
+    v4 = Variable('V4', [1, 2, 3, 4, 5])
+    v5 = Variable('V5', [1, 2, 3, 4, 5])
+    v6 = Variable('V6', [1, 2, 3, 4, 5, 6, 7, 8, 9])
+    v7 = Variable('V7', [1, 2, 3, 4, 5, 6, 7, 8, 9])
+    v8 = Variable('V8', [1, 2, 3, 4, 5, 6, 7, 8, 9])
+    v9 = Variable('V9', [1, 2, 3, 4, 5, 6, 7, 8, 9])
+    vars = [v1, v2, v3, v4, v5, v6, v7, v8, v9]
+    ac = AllDiffConstraint('test9', vars)
+    testcsp = CSP('test', vars, [ac])
+    GacEnforce([ac], testcsp, None, None)
+
+    # v1.pruneValue(1, None, None)
+
+    test1 = "       v1 = Variable('V1', [1, 2])\n\
+            v2 = Variable('V2', [1, 2])\n\
+            v3 = Variable('V3', [1, 2, 3, 4, 5])\n\
+            v4 = Variable('V4', [1, 2, 3, 4, 5])\n\
+            v5 = Variable('V5', [1, 2, 3, 4, 5])\n\
+            v6 = Variable('V6', [1, 2, 3, 4, 5, 6, 7, 8, 9])\n\
+            v7 = Variable('V7', [1, 2, 3, 4, 5, 6, 7, 8, 9])\n\
+            v8 = Variable('V8', [1, 2, 3, 4, 5, 6, 7, 8, 9])\n\
+            v9 = Variable('V9', [1, 2, 3, 4, 5, 6, 7, 8, 9])\n\
+            vars = [v1, v2, v3, v4, v5, v6, v7, v8, v9]\n\
+            ac = AllDiffConstraint('test9', vars)\n\
+            testcsp = CSP('test', vars, [ac])\n\
+            GacEnForce([ac], testcsp, None, None)"
+    
+    soln_doms = [   
+        set([1, 2]), set([1, 2]), set([3, 4, 5]), set([3, 4, 5]), set([3, 4, 5]),
+        set([6, 7, 8, 9]), set([6, 7, 8, 9]), set([6, 7, 8, 9]), set([6, 7, 8, 9])  
+    ]
+
+    for i, v in enumerate(vars):
+        if set(v.curDomain()) != soln_doms[i]:
+            fails[0] = True
+            print("Error: {}.curDomain() == {}".format(v.name(), v.curDomain()))
+            print("Correct curDomain should be == {}".format(list(soln_doms[i])))
+        
+    if fails[0]:
+        print("\nFail Q3 test 1\nErrors were generated on the following code: ")
+        print(test1)
+    else:
+        print("Pass Q3 test 1")
+    print_sep()
+
+    v1 = Variable('V1', [1, 2])
+    v2 = Variable('V2', [1, 2])
+    v3 = Variable('V3', [1, 2, 3, 4, 5])
+    v4 = Variable('V4', [1, 2, 3, 4, 5])
+    v5 = Variable('V5', [1, 2, 3, 4, 5])
+    v6 = Variable('V6', [1, 3, 4, 5])
+    v7 = Variable('V7', [1, 3, 4, 5])
+
+    ac1 = AllDiffConstraint('1', [v1, v2, v3])
+    ac2 = AllDiffConstraint('1', [v1, v2, v4])
+    ac3 = AllDiffConstraint('1', [v1, v2, v5])
+    ac4 = AllDiffConstraint('1', [v3, v4, v5, v6])
+    ac5 = AllDiffConstraint('1', [v3, v4, v5, v7])
+
+    vars = [v1, v2, v3, v4, v5, v6, v7]
+    cnstrs = [ac1, ac2, ac3, ac4, ac5]
+    testcsp = CSP('test2', vars, cnstrs)
+    GacEnforce(cnstrs, testcsp, None, None)
+
+    test2 = "      v1 = Variable('V1', [1, 2])\n\
+            v2 = Variable('V2', [1, 2])\n\
+            v3 = Variable('V3', [1, 2, 3, 4, 5])\n\
+            v4 = Variable('V4', [1, 2, 3, 4, 5])\n\
+            v5 = Variable('V5', [1, 2, 3, 4, 5])\n\
+            v6 = Variable('V6', [1, 3, 4, 5])\n\
+            v7 = Variable('V7', [1, 3, 4, 5])\n\
+            ac1 = AllDiffConstraint('1', [v1, v2, v3])\n\
+            ac2 = AllDiffConstraint('1', [v1, v2, v4])\n\
+            ac3 = AllDiffConstraint('1', [v1, v2, v5])\n\
+            ac4 = AllDiffConstraint('1', [v3, v4, v5, v6])\n\
+            ac5 = AllDiffConstraint('1', [v3, v4, v5, v7])\n\
+            vars = [v1, v2, v3, v4, v5, v6, v7]\n\
+            cnstrs = [ac1, ac2, ac3, ac4, ac5]\n\
+            testcsp = CSP('test2', vars, cnstrs)\n\
+            GacEnForce(cnstrs, testcsp, None, None)"
+    
+    soln_doms = [
+            set([1, 2]), set([1, 2]), 
+            set([3, 4, 5]), set([3, 4, 5]), set([3, 4, 5]),
+            set([1]), set([1])  
+    ]
+
+    # v1.pruneValue(1, None, None)
+
+    for i, v in enumerate(vars):
+        if set(v.curDomain()) != soln_doms[i]:
+            fails[1] = True
+            print("Error: {}.curDomain() == {}".format(v.name(), v.curDomain()))
+            print("Correct curDomain should be == {}".format(list(soln_doms[i])))
+    
+    if fails[1]:
+        print("\nFail Q3 test 2\nErrors were generated on the following code: ")
+        print(test2)
+    else:
+        print("Pass Q3 test 2")
+    print_sep()
+
+    csp = sudokuCSP(b1, 'neq')
+    GacEnforce(csp.constraints(), csp, None, None)
+    vars = csp.variables()
+    vars.sort(key=lambda var: var.name())
+    
+    soln_doms = [
+            set([3]), set([1]), set([2]), set([5]), set([9]),
+            set([8]), set([7]), set([6]), set([4]), set([9]), set([4]),
+            set([6]), set([7]), set([3]), set([1]), set([2]), set([5]),
+            set([8]), set([8]), set([7]), set([5]), set([4]), set([2]),
+            set([6]), set([9]), set([1]), set([3]), set([5]), set([6]),
+            set([7]), set([8]), set([4]), set([2]), set([3]), set([9]),
+            set([1]), set([4]), set([8]), set([1]), set([3]), set([6]),
+            set([9]), set([5]), set([7]), set([2]), set([2]), set([9]),
+            set([3]), set([1]), set([7]), set([5]), set([4]), set([8]),
+            set([6]), set([1]), set([3]), set([8]), set([2]), set([5]),
+            set([7]), set([6]), set([4]), set([9]), set([6]), set([5]),
+            set([4]), set([9]), set([1]), set([3]), set([8]), set([2]),
+            set([7]), set([7]), set([2]), set([9]), set([6]), set([8]),
+            set([4]), set([1]), set([3]), set([5])
+    ]
