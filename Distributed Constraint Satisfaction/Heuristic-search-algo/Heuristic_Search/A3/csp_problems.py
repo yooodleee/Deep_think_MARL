@@ -398,3 +398,52 @@ def formatted_sol(solutions, silent):
     return solutions_formatted
 
 
+def solve_planes(
+        planes_problem,
+        algo,
+        allsolns,
+        variableHeuristic='fixed',
+        silent=False,
+        trace=False,
+):
+    # your implementation for Question 6 goes here.
+    # 
+    # Do not but do not change the funtions signature
+    # (the autograder will twig out if you do).
+
+    # if the silent parameter is set to True
+    # you must ensure that you do not execute any print statements
+    # in this function.
+    # (else the output of the autograder will become confusing).
+    # So if you have any debugging print statements make sure you
+    # only execute them "if not silent". (The autograder will call
+    # this function with silent=True, plane_scheduling.py will call
+    # this function with silent=False).
+
+    # You can optionally ignore the trace parameter
+    # If you implemented tracing to your FC and GAC implementations
+    # you can set this argument to True for debugging.
+
+    # Once you have implemented this function you should be able to
+    # run plane_scheduling.py to solve the test problems (or the autograder).
+    #
+    #
+    """This function takes a planes_problem (an instance of PlaneProblem
+    class) as input. It constructs a CSP, solves the CSP with bt_search
+    (using the options passed to it), and then from the set of CSP solutions
+    it constructs a list of lists specifying a schedule for each plane and
+    returns that list of lists.
+    
+    This required format is the list of lists is:
+    
+    For each plane P the list of lists contains a list L.
+    L[0] == P (i.e., the first item of the list is the plane)
+    and L[1], ..., L[k] (i.e., L[1:]) is the sequence of flights assigned to P.
+    
+    The returned list of lists should contain a list for every plane.
+    """
+
+    return formatted_sol(
+        bt_search(algo, planeCSP(planes_problem), variableHeuristic, allsolns, trace)[0],
+        silent
+    )
