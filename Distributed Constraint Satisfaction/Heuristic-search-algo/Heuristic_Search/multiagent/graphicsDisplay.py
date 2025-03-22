@@ -1,4 +1,4 @@
-from graphicUtils import *
+from graphicsUtils import *
 import math
 import time
 from game import Directions
