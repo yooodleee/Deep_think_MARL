@@ -471,7 +471,7 @@ class PacmanGraphics:
             ),
             self.gridSize * GHOST_SIZE * 0.08
         )
-        moveCilrcle(
+        moveCircle(
             eyes[3],
             (
                 screen_x + self.gridSize * GHOST_SIZE * (0.3 + dx),
@@ -791,7 +791,7 @@ class PacmanGraphics:
     def clearExpandedCells(self):
         if 'expandedCells' in dir(self) and len(self.expandedCells) > 0:
             for cell in self.expandedCells:
-                remove_frmo_screen(cell)
+                remove_from_screen(cell)
     
     def updateDistributions(self, distributions):
         """Draws an agent's belief distributions."""
