@@ -141,3 +141,107 @@ class MinmaxAgent(MultiAgentSearchAgent):
             return min(Actions) # Min Agent
 
 
+class AlphaBetaAgent(MultiAgentSearchAgent):
+
+    def getAction(self, gameState):
+        """Returns the minmax action using self.depth and self.evaluationFunction"""
+        return self.MinMaxAB(gameState, 0, 0, -float("intf"), float("inf"))[1]
+    
+    def MinMaxAB(self, gameState, Index, depth, alpha, beta):
+        if depth == self.depth * gameState.getNumAgents() \
+                or gameState.isLose() or gameState.isWin():     # Base Case
+            return (self.evaluationFunction(gameState), None)
+        
+        if Index == 0:
+            maxAction = (-float("inf"), None)
+            for action in gameState.getLegalActions(Index):
+                nextAction = (self.MinMaxAB(gameState.generateSuccessor(Index, action), (depth + 1) %
+                                            gameState.getNumAgents(), depth + 1, alpha, beta)[0], action)
+                
+                if nextAction[0] > maxAction[0]: maxAction = nextAction
+                if maxAction[0] >= beta: break
+                alpha = max(alpha, maxAction[0])
+            return maxAction
+        else:                                               # Min Agent
+            minAction = (float("inf"), None)
+            for action in gameState.getLegalActions(Index):
+                nextAction = (self.MinMaxAB(gameState.generateSuccessor(Index, action), (depth + 1) %
+                                            gameState.getNumAgents(), depth + 1, alpha, beta)[0], action)
+                
+                if nextAction[0] < minAction[0]: minAction = nextAction
+                if minAction[0] <= alpha: break
+                beta = min(beta, minAction[0])
+            return minAction
+
+
+class ExpectimaxAgent(MultiAgentSearchAgent):
+
+    def getAction(self, gameState):
+        """Returns the expectimax action using self.depth and self.evaluationFunction
+        
+        All ghosts should be modeled as choosing uniformly at random from their
+        legal moves.
+        """
+
+        tDepth = self.depth * gameState.getNumAgents()
+        return self.expectimax(gameState, None, tDepth, 0)[0]
+    
+    def expectimax(self, gameState, action, depth, Index):
+        if depth == 0 or gameState.isLose() or gameState.isWin():   # Base Case
+            return (action, self.evaluationFunction(gameState))
+        
+        if Index == 0:
+            maxAction = (None, -float("inf")):
+            for lAction in gameState.getLegalActions(Index):
+                nextAgent, nextAction = (Index + 1) % gameState.getNumAgents(), None 
+                if depth != self.depth * gameState.getNumAgents():
+                    nextAction = action
+                else:
+                    nextAction = lAction
+                
+                nextValue = self.expectimax(
+                    gameState.generateSuccessor(Index, lAction),
+                    nextAction, depth - 1, nextAgent
+                )
+                if nextValue[1] > maxAction[1]:
+                    maxAction = nextValue
+            
+            return maxAction
+        else:
+            Scores = [
+                self.expectimax(
+                    gameState.generateSuccessor(Index, lAction),
+                    action, depth - 1, (Index + 1) %
+                    gameState.getNumAgents()
+                )[1]
+                for lAction in gameState.getLegalActions(Index)
+            ]
+            return action, sum(Scores) / len(Scores)
+
+
+def betterEvaluationFunction(currentGameState):
+    """extreme ghost-hunting, pallet-nabbing, food-gobling, unstoppable
+    evaluation function.
+    
+    Evaluate by closest food, food left, capsules left, dist to ghost
+    """
+
+    position, foodList = currentGameState.getPacmanPosition(), currentGameState.getFood().asList()
+    closestFood = min(
+        [manhattanDistance(position, food) for food in foodList] + [float("inf")]
+    )
+    gDist = [
+        manhattanDistance(position, ghost)
+        for ghost in currentGameState.getGhostPositions()
+    ]
+
+    if min(gDist) <= 1:
+        return -float("inf")
+    
+    return 100000 / (currentGameState.getNumFood() + 1) \
+           + 1000 / (len(currentGameState.getCapsules()) + 1) \
+           + sum(gDist) / len(gDist) + 100 / (closestFood + 1)
+
+
+# Abbreviation
+better = betterEvaluationFunction()
