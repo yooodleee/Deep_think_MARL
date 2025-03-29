@@ -1,3 +1,3 @@
 # Deep_think_MARL
 
-![image](https://github.com/user-attachments/assets/8de51198-5adb-49c9-9a8e-356e7d8167ea)
+![image](https://github.com/user-attachments/assets/3e5d5524-f843-40c5-8033-06df036e44db)
